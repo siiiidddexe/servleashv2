@@ -47,7 +47,7 @@ export default function Cart() {
           <div className="mt-12 flex justify-center"><span className="spinner" /></div>
         ) : items.length === 0 ? (
           <motion.div className="mt-16 flex flex-col items-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="h-20 w-20 rounded-full bg-orange-50 flex items-center justify-center">
+            <div className="h-20 w-20 rounded-full bg-teal-50 flex items-center justify-center">
               <ShoppingCart size={36} className="text-brand-orange" />
             </div>
             <h2 className="text-[18px] font-bold text-brand-dark mt-5">Cart is empty</h2>
@@ -94,7 +94,7 @@ export default function Cart() {
                 <p className="text-[12px] text-brand-light">Total</p>
                 <p className="text-[20px] font-bold text-brand-dark">₹{total}</p>
               </div>
-              <button onClick={() => nav("/customer/checkout")} className="flex items-center gap-2 rounded-full bg-brand-orange px-6 py-3 text-[14px] font-bold text-white active:opacity-80">
+              <button onClick={() => nav("/customer/checkout")} className="flex items-center gap-2 rounded-full bg-brand-dark px-6 py-3 text-[14px] font-bold text-white active:opacity-80">
                 Checkout <ArrowRight size={16} />
               </button>
             </div>

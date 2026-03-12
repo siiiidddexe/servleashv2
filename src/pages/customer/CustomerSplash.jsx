@@ -16,7 +16,7 @@ export default function CustomerSplash() {
     <PageWrap>
       <div className="flex min-h-[100dvh] flex-col bg-white">
         {/* Hero image area */}
-        <div className="relative h-[55vh] overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100 flex items-center justify-center">
+        <div className="relative h-[55vh] overflow-hidden bg-gradient-to-br from-teal-50 to-teal-100 flex items-center justify-center">
           <div className="text-center px-8">
             <motion.div
               className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-brand-orange/10"

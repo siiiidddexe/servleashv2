@@ -79,7 +79,7 @@ export default function CustomerSaved() {
                     </p>
                     {(item.rating) && (
                       <div className="flex items-center gap-0.5 mt-1">
-                        <Star size={11} className="text-amber-400 fill-amber-400" />
+                        <Star size={11} className="text-yellow-400 fill-yellow-400" />
                         <span className="text-[11px] font-semibold text-brand-medium">{item.rating}</span>
                       </div>
                     )}

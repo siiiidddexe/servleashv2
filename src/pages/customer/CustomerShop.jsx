@@ -57,7 +57,7 @@ export default function CustomerShop() {
               className="w-full rounded-xl bg-brand-bg border-0 py-2.5 pl-10 pr-4 text-[14px] text-brand-dark placeholder:text-brand-light outline-none"
             />
           </div>
-          <button className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-orange">
+          <button className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl bg-brand-dark">
             <SlidersHorizontal size={18} className="text-white" />
           </button>
         </div>
@@ -70,7 +70,7 @@ export default function CustomerShop() {
             key={c}
             onClick={() => setActive(i)}
             className={`shrink-0 rounded-full px-4 py-2 text-[13px] font-semibold transition-all ${
-              active === i ? "bg-brand-orange text-white" : "bg-white text-brand-medium shadow-soft"
+              active === i ? "bg-brand-dark text-white" : "bg-white text-brand-medium shadow-soft"
             }`}
           >
             {c}
@@ -101,12 +101,12 @@ export default function CustomerShop() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
             >
-              <div className="h-28 rounded-xl bg-gradient-to-br from-brand-orange/5 to-orange-50 flex items-center justify-center">
+              <div className="h-28 rounded-xl bg-gradient-to-br from-teal-500/5 to-teal-50 flex items-center justify-center">
                 <ShoppingCart size={28} className="text-brand-orange/30" />
               </div>
               <h3 className="mt-3 text-[13px] font-bold text-brand-dark truncate">{p.name}</h3>
               <div className="mt-1 flex items-center gap-1">
-                <Star size={11} className="text-amber-400 fill-amber-400" />
+                <Star size={11} className="text-yellow-400 fill-yellow-400" />
                 <span className="text-[11px] font-semibold text-brand-medium">{p.rating}</span>
                 <span className="text-[11px] text-brand-light">({p.reviews})</span>
               </div>
@@ -117,7 +117,7 @@ export default function CustomerShop() {
                     <span className="ml-1.5 text-[11px] text-brand-light line-through">₹{p.mrp}</span>
                   )}
                 </div>
-                <button onClick={() => handleAddToCart(p.id)} className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${adding === p.id ? "bg-brand-green" : "bg-brand-orange"}`}>
+                <button onClick={() => handleAddToCart(p.id)} className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${adding === p.id ? "bg-brand-green" : "bg-brand-dark"}`}>
                   <Plus size={16} className="text-white" />
                 </button>
               </div>

@@ -13,7 +13,7 @@ const STATUS_TABS = [
 ];
 
 const STATUS_BADGE = {
-  pending:   { color: "bg-amber-100 text-amber-700", icon: Clock },
+  pending:   { color: "bg-teal-100 text-teal-700", icon: Clock },
   confirmed: { color: "bg-blue-100 text-blue-700", icon: CheckCircle2 },
   completed: { color: "bg-green-100 text-green-700", icon: CheckCircle2 },
   cancelled: { color: "bg-red-100 text-red-700", icon: XCircle },
@@ -57,7 +57,7 @@ export default function AdminBookings() {
         {STATUS_TABS.map(t => (
           <button key={t.id} onClick={() => setFilter(t.id)}
             className={`shrink-0 px-4 py-1.5 rounded-full text-[13px] font-semibold transition-colors ${
-              filter === t.id ? "bg-brand-orange text-white" : "bg-white text-brand-medium border border-brand-border-light"
+              filter === t.id ? "bg-brand-dark text-white" : "bg-white text-brand-medium border border-brand-border-light"
             }`}>{t.label}</button>
         ))}
       </div>
@@ -114,7 +114,7 @@ export default function AdminBookings() {
               )}
               {b.status === "confirmed" && (
                 <button onClick={() => handleStatus(b.id, "completed")} disabled={updating === b.id}
-                  className="w-full mt-3 py-2 rounded-xl bg-brand-orange text-white text-[13px] font-bold disabled:opacity-50">
+                  className="w-full mt-3 py-2 rounded-xl bg-brand-dark text-white text-[13px] font-bold disabled:opacity-50">
                   {updating === b.id ? "..." : "Mark Completed"}
                 </button>
               )}
@@ -125,7 +125,7 @@ export default function AdminBookings() {
 
       {/* Refresh FAB */}
       <button onClick={fetchBookings}
-        className="fixed bottom-24 right-4 h-12 w-12 rounded-full bg-brand-orange text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform z-40">
+        className="fixed bottom-24 right-4 h-12 w-12 rounded-full bg-brand-dark text-white shadow-lg flex items-center justify-center active:scale-95 transition-transform z-40">
         <RefreshCw size={20} />
       </button>
 

@@ -60,7 +60,7 @@ export default function PetDocs() {
             </div>
           </div>
           {docs.length < 10 && (
-            <button onClick={() => setShowUpload(true)} className="flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-[13px] font-bold text-white">
+            <button onClick={() => setShowUpload(true)} className="flex items-center gap-1.5 rounded-full bg-brand-dark px-4 py-2 text-[13px] font-bold text-white">
               <Upload size={14} /> Upload
             </button>
           )}

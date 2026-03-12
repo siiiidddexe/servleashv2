@@ -39,7 +39,7 @@ export default function VendorProfile() {
             <h1 className="text-[20px] font-bold text-brand-dark">Business Profile</h1>
           </div>
           <button onClick={() => editing ? handleSave() : setEditing(true)}
-            className="flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-[13px] font-bold text-white">
+            className="flex items-center gap-1.5 rounded-full bg-brand-dark px-4 py-2 text-[13px] font-bold text-white">
             {editing ? <><Save size={14} /> Save</> : <><Edit2 size={14} /> Edit</>}
           </button>
         </div>
@@ -49,7 +49,7 @@ export default function VendorProfile() {
         {/* Business Card */}
         <motion.div className="rounded-2xl bg-white p-5 shadow-soft" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand-orange to-amber-400 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center">
               <Store size={28} className="text-white" />
             </div>
             <div className="flex-1">

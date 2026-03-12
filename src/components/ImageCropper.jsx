@@ -104,7 +104,7 @@ export default function ImageCropper({ onCropped, onCancel, aspectRatio = 1 }) {
                 </button>
                 <button
                   onClick={getCroppedBlob}
-                  className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl bg-brand-orange text-white text-[13px] font-semibold"
+                  className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-xl bg-brand-dark text-white text-[13px] font-semibold"
                 >
                   <Check size={14} /> Apply
                 </button>

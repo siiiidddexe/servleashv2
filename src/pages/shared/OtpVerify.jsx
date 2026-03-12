@@ -61,7 +61,7 @@ export default function OtpVerify() {
         <BackBtn />
 
         <motion.div className="mt-16 flex justify-center" initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50">
             <ShieldCheck size={32} className="text-brand-orange" />
           </div>
         </motion.div>

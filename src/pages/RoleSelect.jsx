@@ -9,8 +9,8 @@ const roles = [
     title: "Pet Parent",
     desc: "Book services, shop, and care for your pets",
     icon: PawPrint,
-    color: "#FC8019",
-    bg: "bg-orange-50",
+    color: "#14B8A6",
+    bg: "bg-teal-50",
   },
   {
     id: "admin",
@@ -44,7 +44,7 @@ export default function RoleSelect() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-orange">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-dark">
               <PawPrint size={22} className="text-white" />
             </div>
             <span className="font-display text-xl font-bold text-brand-dark">servleash</span>

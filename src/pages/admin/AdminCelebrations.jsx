@@ -46,7 +46,7 @@ export default function AdminCelebrations() {
       <div className="bg-white px-5 pt-12 pb-4">
         <div className="flex items-center justify-between">
           <h1 className="text-[20px] font-bold text-brand-dark">Celebrations</h1>
-          <button onClick={openAdd} className="flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-[13px] font-bold text-white">
+          <button onClick={openAdd} className="flex items-center gap-1.5 rounded-full bg-brand-dark px-4 py-2 text-[13px] font-bold text-white">
             <Plus size={14} /> Add
           </button>
         </div>

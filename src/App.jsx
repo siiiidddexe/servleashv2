@@ -1,9 +1,6 @@
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
-// Landing
-import RoleSelect from "./pages/RoleSelect";
-
 // Shared auth pages (unified — single login for all roles)
 import Login from "./pages/shared/Login";
 import OtpVerify from "./pages/shared/OtpVerify";
@@ -65,8 +62,8 @@ export default function App() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* ── Role selection ── */}
-        <Route path="/" element={<RoleSelect />} />
+        {/* ── Root → Login ── */}
+        <Route path="/" element={<Login />} />
 
         {/* ── Unified auth (single login page for all roles) ── */}
         <Route path="/login" element={<Login />} />

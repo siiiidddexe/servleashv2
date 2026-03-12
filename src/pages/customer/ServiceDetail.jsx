@@ -42,7 +42,7 @@ export default function ServiceDetail() {
 
   return (
     <div className="min-h-[100dvh] bg-brand-bg pb-28">
-      <div className="relative h-56 bg-gradient-to-br from-brand-orange/15 to-orange-50 flex items-center justify-center">
+      <div className="relative h-56 bg-gradient-to-br from-teal-500/15 to-teal-50 flex items-center justify-center">
         <button onClick={() => nav(-1)} className="absolute top-12 left-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-soft">
           <ArrowLeft size={20} className="text-brand-dark" />
         </button>
@@ -57,7 +57,7 @@ export default function ServiceDetail() {
         <h1 className="text-[22px] font-bold text-brand-dark mt-2">{svc.name}</h1>
         <div className="flex items-center gap-3 mt-2">
           <div className="flex items-center gap-1">
-            <Star size={14} className="text-amber-400 fill-amber-400" />
+            <Star size={14} className="text-yellow-400 fill-yellow-400" />
             <span className="text-[14px] font-semibold text-brand-dark">{svc.rating}</span>
             <span className="text-[12px] text-brand-light">({svc.reviews} reviews)</span>
           </div>
@@ -98,7 +98,7 @@ export default function ServiceDetail() {
                 <div className="flex-1 min-w-0">
                   <h4 className="text-[15px] font-bold text-brand-dark truncate">{v.name}</h4>
                   <div className="flex items-center gap-2 mt-1">
-                    <Star size={11} className="text-amber-400 fill-amber-400" />
+                    <Star size={11} className="text-yellow-400 fill-yellow-400" />
                     <span className="text-[12px] font-semibold text-brand-medium">{v.rating}</span>
                     <span className="text-brand-border">·</span>
                     <span className="text-[12px] text-brand-light">{v.distance}</span>

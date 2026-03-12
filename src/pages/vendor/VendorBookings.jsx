@@ -57,7 +57,7 @@ export default function VendorBookings() {
             const count = bookings.filter(b => b.status === t.key).length;
             return (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold transition-colors ${tab === t.key ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}>
+                className={`shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold transition-colors ${tab === t.key ? "bg-brand-dark text-white" : "bg-brand-bg text-brand-medium"}`}>
                 <Icon size={14} /> {t.label} ({count})
               </button>
             );
@@ -103,7 +103,7 @@ export default function VendorBookings() {
                       </>
                     )}
                     {b.status === "confirmed" && (
-                      <button onClick={() => handleAction(b.id, "complete")} className="flex items-center gap-1 rounded-xl bg-brand-orange px-4 py-2 text-[12px] font-bold text-white">
+                      <button onClick={() => handleAction(b.id, "complete")} className="flex items-center gap-1 rounded-xl bg-brand-dark px-4 py-2 text-[12px] font-bold text-white">
                         <CheckCircle size={14} /> Complete
                       </button>
                     )}

@@ -87,7 +87,7 @@ export default function PetOGram() {
             <BackBtn />
             <h1 className="text-[20px] font-bold text-brand-dark">Pet-O-Gram 🐾</h1>
           </div>
-          <button onClick={() => fileRef.current?.click()} className="h-10 w-10 rounded-full bg-brand-orange flex items-center justify-center">
+          <button onClick={() => fileRef.current?.click()} className="h-10 w-10 rounded-full bg-brand-dark flex items-center justify-center">
             <Plus size={20} className="text-white" />
           </button>
           <input ref={fileRef} type="file" className="hidden" accept="image/*,video/*" onChange={handleFile} />
@@ -113,7 +113,7 @@ export default function PetOGram() {
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-orange to-amber-400 flex items-center justify-center text-white text-[13px] font-bold">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center text-white text-[13px] font-bold">
                       {(post.userName || "U")[0]}
                     </div>
                     <div>
@@ -121,7 +121,7 @@ export default function PetOGram() {
                       <p className="text-[10px] text-brand-light flex items-center gap-1"><Clock size={10} /> {timeAgo(post.createdAt)}</p>
                     </div>
                   </div>
-                  <button onClick={() => handleFollow(post.userId)} className={`rounded-full px-3 py-1 text-[11px] font-bold ${post.isFollowing ? "bg-brand-bg text-brand-medium" : "bg-brand-orange text-white"}`}>
+                  <button onClick={() => handleFollow(post.userId)} className={`rounded-full px-3 py-1 text-[11px] font-bold ${post.isFollowing ? "bg-brand-bg text-brand-medium" : "bg-brand-dark text-white"}`}>
                     {post.isFollowing ? "Following" : "Follow"}
                   </button>
                 </div>
@@ -205,7 +205,7 @@ export default function PetOGram() {
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-brand-bg">
                 <input type="text" value={commentText} onChange={e => setCommentText(e.target.value)} className="input-field flex-1"
                   placeholder="Add a comment..." onKeyDown={e => e.key === "Enter" && submitComment()} />
-                <button onClick={submitComment} className="h-10 w-10 shrink-0 rounded-full bg-brand-orange flex items-center justify-center">
+                <button onClick={submitComment} className="h-10 w-10 shrink-0 rounded-full bg-brand-dark flex items-center justify-center">
                   <Send size={16} className="text-white" />
                 </button>
               </div>

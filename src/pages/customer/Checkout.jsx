@@ -125,7 +125,7 @@ export default function Checkout() {
           <div className="flex gap-2">
             {[0, 2, 5, 10].map(amt => (
               <button key={amt} onClick={() => setCharityAmount(amt)}
-                className={`flex-1 rounded-xl py-2.5 text-[13px] font-bold transition-colors ${charityAmount === amt ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}>
+                className={`flex-1 rounded-xl py-2.5 text-[13px] font-bold transition-colors ${charityAmount === amt ? "bg-brand-dark text-white" : "bg-brand-bg text-brand-medium"}`}>
                 {amt === 0 ? "None" : `₹${amt}`}
               </button>
             ))}

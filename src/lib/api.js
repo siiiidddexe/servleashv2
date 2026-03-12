@@ -30,7 +30,7 @@ async function uploadRequest(path, formData) {
 export const api = {
   // Auth (password + OTP)
   register: (email, password, role, extra = {}) => request("/auth/register", { method: "POST", body: JSON.stringify({ email, password, role, ...extra }) }),
-  login: (email, password, role) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password, role }) }),
+  login: (email, password) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
   me: () => request("/auth/me"),
   requestOtp: (email, role) => request("/auth/request-otp", { method: "POST", body: JSON.stringify({ email, role }) }),
   resendOtp: (email, role) => request("/auth/resend-otp", { method: "POST", body: JSON.stringify({ email, role }) }),

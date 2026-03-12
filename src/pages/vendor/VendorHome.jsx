@@ -21,7 +21,7 @@ export default function VendorHome() {
   }, []);
 
   const cards = stats ? [
-    { icon: CalendarCheck, label: "Today's Bookings", value: stats.todayBookings, color: "#FC8019" },
+    { icon: CalendarCheck, label: "Today's Bookings", value: stats.todayBookings, color: "#14B8A6" },
     { icon: DollarSign, label: "Revenue", value: `₹${stats.revenue.toLocaleString()}`, color: "#48c78e" },
     { icon: Star, label: "Rating", value: stats.rating, color: "#f59e0b" },
     { icon: Scissors, label: "Services", value: stats.servicesCount, color: "#4285F4" },

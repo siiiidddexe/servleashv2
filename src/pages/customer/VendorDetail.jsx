@@ -55,7 +55,7 @@ export default function VendorDetail() {
         <h1 className="text-[22px] font-bold text-brand-dark mt-2">{vendor.name}</h1>
         <div className="flex items-center gap-3 mt-2">
           <div className="flex items-center gap-1">
-            <Star size={14} className="text-amber-400 fill-amber-400" />
+            <Star size={14} className="text-yellow-400 fill-yellow-400" />
             <span className="text-[14px] font-semibold text-brand-dark">{vendor.rating}</span>
             <span className="text-[12px] text-brand-light">({vendor.reviews} reviews)</span>
           </div>
@@ -103,7 +103,7 @@ export default function VendorDetail() {
                 <div className="text-right">
                   <p className="text-[15px] font-bold text-brand-orange">₹{s.price}</p>
                   <div className="flex items-center gap-0.5 justify-end mt-0.5">
-                    <Star size={10} className="text-amber-400 fill-amber-400" />
+                    <Star size={10} className="text-yellow-400 fill-yellow-400" />
                     <span className="text-[11px] text-brand-medium">{s.rating}</span>
                   </div>
                 </div>

@@ -76,7 +76,7 @@ export default function CoinsPage() {
 
       <div className="px-5 mt-4 space-y-4">
         {/* Balance Card */}
-        <motion.div className="rounded-2xl bg-gradient-to-br from-brand-orange to-amber-500 p-6 shadow-soft text-white"
+        <motion.div className="rounded-2xl bg-gradient-to-br from-teal-500 to-teal-400 p-6 shadow-soft text-white"
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3">
             <div className="h-14 w-14 rounded-2xl bg-white/20 flex items-center justify-center">
@@ -101,7 +101,7 @@ export default function CoinsPage() {
               <p className="text-[12px] text-brand-light">Earn 5 coins every day!</p>
             </div>
             <button onClick={claimDaily} disabled={claiming || claimed}
-              className={`rounded-full px-5 py-2.5 text-[13px] font-bold transition-colors ${claimed ? "bg-brand-green text-white" : "bg-brand-orange text-white"} disabled:opacity-70`}>
+              className={`rounded-full px-5 py-2.5 text-[13px] font-bold transition-colors ${claimed ? "bg-brand-green text-white" : "bg-brand-dark text-white"} disabled:opacity-70`}>
               {claimed ? <span className="flex items-center gap-1"><Check size={14} /> Claimed</span> : claiming ? "..." : <span className="flex items-center gap-1"><Sparkles size={14} /> Claim</span>}
             </button>
           </div>
@@ -128,7 +128,7 @@ export default function CoinsPage() {
             <input type="text" value={referralInput} onChange={e => setReferralInput(e.target.value.toUpperCase())}
               className="input-field flex-1" placeholder="Enter friend's code" maxLength={10} />
             <button onClick={useReferral} disabled={redeeming || !referralInput.trim()}
-              className="rounded-xl bg-brand-orange px-5 text-[13px] font-bold text-white disabled:opacity-50">
+              className="rounded-xl bg-brand-dark px-5 text-[13px] font-bold text-white disabled:opacity-50">
               {redeeming ? "..." : "Redeem"}
             </button>
           </div>

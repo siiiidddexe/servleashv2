@@ -69,10 +69,10 @@ export default function ForgotPassword() {
           </motion.div>
 
           <motion.div
-            className="mt-8 rounded-2xl bg-amber-50 border border-amber-100 p-4 w-full max-w-sm text-left"
+            className="mt-8 rounded-2xl bg-teal-50 border border-teal-100 p-4 w-full max-w-sm text-left"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
           >
-            <p className="text-[12px] text-amber-700 leading-relaxed">
+            <p className="text-[12px] text-teal-700 leading-relaxed">
               <strong>Didn't receive it?</strong> Check your spam/junk folder. The link expires in 1 hour.
               If you don't have an account with this email, no email will be sent.
             </p>
@@ -93,7 +93,7 @@ export default function ForgotPassword() {
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.4 }}
         >
-          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-teal-50">
             <Mail size={32} className="text-brand-orange" />
           </div>
         </motion.div>

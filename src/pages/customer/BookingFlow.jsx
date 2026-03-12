@@ -123,7 +123,7 @@ export default function BookingFlow() {
             <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar">
               {days.map((d) => (
                 <button key={d.date} onClick={() => setSelectedDate(d.date)}
-                  className={`shrink-0 w-16 py-3 rounded-xl text-center transition-all ${selectedDate === d.date ? "bg-brand-orange text-white" : "bg-white shadow-soft text-brand-dark"}`}>
+                  className={`shrink-0 w-16 py-3 rounded-xl text-center transition-all ${selectedDate === d.date ? "bg-brand-dark text-white" : "bg-white shadow-soft text-brand-dark"}`}>
                   <p className="text-[11px] font-medium">{d.label}</p>
                   <p className="text-[18px] font-bold mt-0.5">{d.day}</p>
                 </button>
@@ -137,7 +137,7 @@ export default function BookingFlow() {
             <div className="mt-3 grid grid-cols-4 gap-2">
               {TIME_SLOTS.map((t) => (
                 <button key={t} onClick={() => setSelectedTime(t)}
-                  className={`py-2.5 rounded-xl text-[13px] font-semibold transition-all ${selectedTime === t ? "bg-brand-orange text-white" : "bg-white shadow-soft text-brand-dark"}`}>
+                  className={`py-2.5 rounded-xl text-[13px] font-semibold transition-all ${selectedTime === t ? "bg-brand-dark text-white" : "bg-white shadow-soft text-brand-dark"}`}>
                   {t}
                 </button>
               ))}
@@ -151,7 +151,7 @@ export default function BookingFlow() {
               <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar">
                 {myPets.map((p) => (
                   <button key={p.id} onClick={() => setSelectedPet(p.name)}
-                    className={`shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all ${selectedPet === p.name ? "bg-brand-orange text-white" : "bg-white shadow-soft text-brand-dark"}`}>
+                    className={`shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-semibold transition-all ${selectedPet === p.name ? "bg-brand-dark text-white" : "bg-white shadow-soft text-brand-dark"}`}>
                     {p.species === "Cat" ? "🐱" : "🐶"} {p.name}
                   </button>
                 ))}

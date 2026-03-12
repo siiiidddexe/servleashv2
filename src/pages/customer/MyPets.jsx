@@ -62,7 +62,7 @@ export default function MyPets() {
             <BackBtn />
             <h1 className="text-[20px] font-bold text-brand-dark">My Pets</h1>
           </div>
-          <button onClick={openAdd} className="flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-[13px] font-bold text-white">
+          <button onClick={openAdd} className="flex items-center gap-1.5 rounded-full bg-brand-dark px-4 py-2 text-[13px] font-bold text-white">
             <Plus size={16} /> Add Pet
           </button>
         </div>

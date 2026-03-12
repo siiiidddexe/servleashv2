@@ -129,7 +129,7 @@ export default function AdminServices() {
           <p className="text-[13px] text-brand-light font-medium">Admin Panel</p>
           <h1 className="text-[22px] font-bold text-brand-dark">Services</h1>
         </div>
-        <button onClick={() => setEditing("new")} className="h-10 w-10 rounded-xl bg-brand-orange flex items-center justify-center shadow-md">
+        <button onClick={() => setEditing("new")} className="h-10 w-10 rounded-xl bg-brand-dark flex items-center justify-center shadow-md">
           <Plus size={20} className="text-white" />
         </button>
       </div>

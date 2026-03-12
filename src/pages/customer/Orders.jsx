@@ -38,7 +38,7 @@ export default function Orders() {
           <div className="mt-12 flex justify-center"><span className="spinner" /></div>
         ) : orders.length === 0 ? (
           <motion.div className="mt-16 flex flex-col items-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="h-20 w-20 rounded-full bg-orange-50 flex items-center justify-center">
+            <div className="h-20 w-20 rounded-full bg-teal-50 flex items-center justify-center">
               <Package size={36} className="text-brand-orange" />
             </div>
             <h2 className="text-[18px] font-bold text-brand-dark mt-5">No orders yet</h2>
