@@ -1,0 +1,38 @@
+services:
+
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    restart: always
+    command: start --bind 0.0.0.0:8000 --user ${SURREALDB_USER:-root} --pass ${SURREALDB_PASS:-root} surrealkv:///data/db
+    volumes:
+      - surrealdb_data:/data/db
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    restart: always
+    depends_on:
+      - surrealdb
+    environment:
+      - SURREALDB_URL=ws://surrealdb:8000
+      - SURREALDB_USER=${SURREALDB_USER:-root}
+      - SURREALDB_PASS=${SURREALDB_PASS:-root}
+      - MAIL_API_URL=${MAIL_API_URL:-https://nexomail.logiclaunch.in}
+      - MAIL_API_KEY=${MAIL_API_KEY:-}
+    volumes:
+      - uploads_data:/app/uploads
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "${PORT:-80}:80"
+
+volumes:
+  surrealdb_data:
+  uploads_data:

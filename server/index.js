@@ -215,8 +215,11 @@ async function seedDefaults() {
 
 async function initDB() {
   db = new Surreal();
-  await db.connect("ws://127.0.0.1:8000");
-  await db.signin({ username: "root", password: "root" });
+  const surrealUrl = process.env.SURREALDB_URL || "ws://127.0.0.1:8000";
+  const surrealUser = process.env.SURREALDB_USER || "root";
+  const surrealPass = process.env.SURREALDB_PASS || "root";
+  await db.connect(surrealUrl);
+  await db.signin({ username: surrealUser, password: surrealPass });
   await db.use({ namespace: "servleash", database: "servleash" });
   console.log("✅ Connected to SurrealDB");
   await seedDefaults();
