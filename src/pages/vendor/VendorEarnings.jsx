@@ -52,6 +52,12 @@ export default function VendorEarnings() {
           </div>
           <p className="text-[20px] font-bold text-brand-green">₹{data.settled}</p>
           <p className="text-[11px] text-brand-light mt-1">Weekly settlements every Monday</p>
+          <button
+            onClick={() => alert("Payouts are processed weekly every Monday. Your pending amount will be settled automatically.")}
+            className="mt-3 w-full rounded-xl bg-brand-dark py-2.5 text-[13px] font-bold text-white flex items-center justify-center gap-2 active:opacity-80"
+          >
+            <DollarSign size={14} /> Request Payout
+          </button>
         </motion.div>
 
         {/* Revenue split info */}

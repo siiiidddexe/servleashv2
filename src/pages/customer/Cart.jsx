@@ -6,6 +6,8 @@ import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
 
+const PLACEHOLDER = "https://cdn.dribbble.com/userupload/3848536/file/original-4f623bccd6f252547abb165cb87a86ae.jpeg?resize=2048x1572&vertical=center";
+
 export default function Cart() {
   const nav = useNavigate();
   const [items, setItems] = useState([]);
@@ -60,8 +62,7 @@ export default function Cart() {
               <motion.div key={item.productId} className="rounded-2xl bg-white p-4 shadow-soft flex items-center gap-3"
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
                 <div className="h-16 w-16 shrink-0 rounded-xl bg-brand-bg overflow-hidden">
-                  {item.image ? <img src={item.image} alt="" className="h-full w-full object-cover" /> :
-                    <div className="h-full w-full flex items-center justify-center text-2xl">📦</div>}
+                  <img src={item.image || PLACEHOLDER} alt={item.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[14px] font-bold text-brand-dark truncate">{item.name}</h3>

@@ -31,11 +31,11 @@ export default function CoinsPage() {
     setClaiming(true);
     try {
       const res = await api.claimDailyCoins();
-      if (res.coins !== undefined) {
-        setData(prev => ({ ...prev, balance: prev.balance + (res.coins || 0) }));
+      if (res.success) {
+        setData(prev => ({ ...prev, balance: res.balance || prev.balance + (res.earned || 5) }));
         setClaimed(true);
       } else {
-        alert(res.error || "Already claimed today!");
+        alert(res.message || "Already claimed today!");
       }
     } catch { /* */ }
     setClaiming(false);

@@ -127,13 +127,14 @@ export default function PetOGram() {
                 </div>
 
                 {/* Media */}
-                {post.mediaUrl && (
-                  post.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? (
-                    <video src={post.mediaUrl} controls className="w-full max-h-[400px] object-cover bg-black" />
+                {post.mediaUrl && (() => {
+                  const url = post.mediaUrl.startsWith("http") ? post.mediaUrl : `/api${post.mediaUrl}`;
+                  return post.mediaUrl.match(/\.(mp4|webm|mov)$/i) ? (
+                    <video src={url} controls className="w-full max-h-[400px] object-cover bg-black" />
                   ) : (
-                    <img src={post.mediaUrl} alt="" className="w-full max-h-[400px] object-cover bg-gray-50" />
-                  )
-                )}
+                    <img src={url} alt="" className="w-full max-h-[400px] object-cover bg-gray-50" />
+                  );
+                })()}
 
                 {/* Actions */}
                 <div className="px-4 py-3">

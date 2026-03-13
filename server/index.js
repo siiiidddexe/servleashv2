@@ -55,13 +55,22 @@ function normalizeRecords(arr) {
 }
 
 // Wrapper: SurrealDB v3 throws when a table doesn't exist yet.
-// For SELECT/DELETE queries we treat that as "no data"; for writes we re-throw.
+// For SELECT/DELETE we treat that as "no data"; for writes we auto-create the table and retry.
 async function dbQuery(query, vars) {
   try {
     return await db.query(query, vars);
   } catch (err) {
     const isNotFound = err?.kind === "NotFound" || /does not exist/i.test(err?.message);
     if (isNotFound && /^\s*(SELECT|DELETE)/i.test(query)) return [[]];
+    // Auto-create missing table for any write operation and retry
+    if (isNotFound) {
+      const tableName = err?.details?.details?.name
+        || (vars?.tb ? String(vars.tb) : null);
+      if (tableName) {
+        await db.query(`DEFINE TABLE IF NOT EXISTS ${tableName} SCHEMALESS`);
+        return await db.query(query, vars);
+      }
+    }
     throw err;
   }
 }
@@ -97,7 +106,7 @@ async function dbMerge(table, id, data) {
   const clean = { ...data };
   delete clean.id;
   await dbQuery(
-    `UPDATE type::record($tb, $id) MERGE $data`,
+    `UPSERT type::record($tb, $id) MERGE $data`,
     { tb: table, id: String(id), data: clean }
   );
 }
@@ -107,7 +116,7 @@ async function dbPut(table, id, data) {
   const clean = { ...data };
   delete clean.id;
   await dbQuery(
-    `UPDATE type::record($tb, $id) CONTENT $data`,
+    `UPSERT type::record($tb, $id) CONTENT $data`,
     { tb: table, id: String(id), data: clean }
   );
 }
@@ -221,6 +230,17 @@ const resetTokens = new Map();   // token -> { email, role, expires }
 const vendorStreams = new Map(); // vendorId -> Set<res>
 function notifyVendor(vendorId, payload) {
   const set = vendorStreams.get(vendorId);
+  if (!set) return;
+  const data = JSON.stringify(payload);
+  for (const res of set) {
+    try { res.write(`event: message\ndata: ${data}\n\n`); } catch { /* ignore */ }
+  }
+}
+
+// ── Customer SSE ────────────────────────────────
+const customerStreams = new Map(); // userId → Set<res>
+function notifyCustomer(userId, payload) {
+  const set = customerStreams.get(userId);
   if (!set) return;
   const data = JSON.stringify(payload);
   for (const res of set) {
@@ -748,28 +768,37 @@ app.get("/api/bookings", authenticate, async (req, res) => {
 });
 
 app.post("/api/bookings", authenticate, async (req, res) => {
-  const { serviceId, vendorId, date, time, petName, notes } = req.body;
-  if (!serviceId || !vendorId || !date || !time) {
-    return res.status(400).json({ error: "serviceId, vendorId, date, and time are required" });
+  const { serviceId, vendorId, date, time, petName, notes, mode, paymentMethod, paymentId } = req.body;
+  if (!serviceId || !date || !time) {
+    return res.status(400).json({ error: "serviceId, date, and time are required" });
   }
   const svc = await dbGetById("services", serviceId);
-  const ven = await dbGetById("vendors", vendorId);
-  if (!svc || !ven) return res.status(404).json({ error: "Service or vendor not found" });
+  if (!svc) return res.status(404).json({ error: "Service not found" });
+  const ven = vendorId ? await dbGetById("vendors", vendorId) : null;
+
+  // If vendorId provided → status is 'upcoming' (pre-assigned)
+  // If no vendorId → status is 'pending' (Rapido model: any vendor can accept)
+  const status = vendorId ? "upcoming" : "pending";
+  const price = mode === "home_delivery" && svc.homePrice ? svc.homePrice : svc.price;
 
   const booking = {
-    id: genId("bk"), userId: req.userId, serviceId, vendorId,
+    id: genId("bk"), userId: req.userId, serviceId, vendorId: vendorId || null,
     date, time, petName: petName || null, notes: notes || null,
-    status: "upcoming", amount: svc.price, created_at: new Date().toISOString(),
+    mode: mode || "in_store", paymentMethod: paymentMethod || null, paymentId: paymentId || null,
+    status, amount: price, serviceName: svc.name, serviceCategory: svc.category,
+    created_at: new Date().toISOString(),
   };
   await dbCreate("bookings", booking.id, booking);
-  try { notifyVendor(vendorId, { type: "new_booking", booking }); } catch { /* ignore */ }
+  if (vendorId) {
+    try { notifyVendor(vendorId, { type: "new_booking", booking }); } catch { /* ignore */ }
+  }
   res.json({ success: true, booking: { ...booking, service: svc, vendor: ven } });
 });
 
 app.put("/api/bookings/:id/cancel", authenticate, async (req, res) => {
   const bk = await dbGetById("bookings", req.params.id);
   if (!bk || bk.userId !== req.userId) return res.status(404).json({ error: "Booking not found" });
-  if (bk.status !== "upcoming") return res.status(400).json({ error: "Only upcoming bookings can be cancelled" });
+  if (bk.status !== "upcoming" && bk.status !== "pending") return res.status(400).json({ error: "Only upcoming/pending bookings can be cancelled" });
   if (bk.date && bk.time) {
     const apptTime = new Date(`${bk.date}T${bk.time}`);
     const now = new Date();
@@ -1036,6 +1065,24 @@ app.get("/api/vendor/stream", authenticate, (req, res) => {
   req.on("close", () => { set.delete(res); });
 });
 
+// Customer SSE stream (for booking accepted notifications etc.)
+app.get("/api/customer/stream", authenticate, (req, res) => {
+  const userId = req.userId;
+  res.writeHead(200, { Connection: "keep-alive", "Content-Type": "text/event-stream", "Cache-Control": "no-cache" });
+  res.write("\n");
+  let set = customerStreams.get(userId);
+  if (!set) { set = new Set(); customerStreams.set(userId, set); }
+  set.add(res);
+  req.on("close", () => { set.delete(res); });
+});
+
+// Product categories (dynamic)
+app.get("/api/products/categories", async (req, res) => {
+  const allProducts = await dbAll("products");
+  const cats = [...new Set(allProducts.map(p => p.category).filter(Boolean))];
+  res.json(cats);
+});
+
 app.get("/api/vendor/stats", authenticate, async (req, res) => {
   if (req.user?.role !== "vendor") return res.status(403).json({ error: "Vendor only" });
   const allBookings = await dbAll("bookings");
@@ -1051,13 +1098,29 @@ app.get("/api/vendor/bookings", authenticate, async (req, res) => {
   const allBookings = await dbAll("bookings");
   const allServices = await dbAll("services");
   const allUsers = await dbAll("users");
+  const allVendors = await dbAll("vendors");
   const svcMap = Object.fromEntries(allServices.map(s => [s.id, s]));
   const userMap = Object.fromEntries(allUsers.map(u => [u.id, u]));
-  let list = allBookings.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  // Find which vendor record belongs to this user (match by email)
+  const myVendor = allVendors.find(v => v.email === req.user.email || v.userId === req.userId);
+  const myServiceIds = new Set(myVendor?.services || []);
+
+  // Show: bookings assigned to this vendor OR unassigned (pending) bookings matching the vendor's services
+  let list = allBookings.filter(b => {
+    if (b.vendorId && b.vendorId === myVendor?.id) return true; // assigned to me
+    if (!b.vendorId && b.status === "pending" && myServiceIds.has(b.serviceId)) return true; // unassigned pool
+    return false;
+  });
+
+  list = list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   list = list.map(b => ({
     ...b,
+    serviceName: svcMap[b.serviceId]?.name || b.serviceName || "Service",
     service: svcMap[b.serviceId] || null,
     customerName: userMap[b.userId]?.name || "Customer",
+    customerEmail: b.status !== "pending" ? userMap[b.userId]?.email : null, // hide contact until accepted
+    price: b.amount || svcMap[b.serviceId]?.price || 0,
   }));
   res.json(list);
 });
@@ -1136,7 +1199,7 @@ app.get("/api/orders", authenticate, async (req, res) => {
 });
 
 app.post("/api/orders", authenticate, async (req, res) => {
-  const { address, coinsUsed, charityAmount } = req.body;
+  const { address, coinsUsed, charityAmount, paymentMethod } = req.body;
   const cart = await dbGetById("carts", req.userId);
   const cartItems = cart?.items || [];
   if (!cartItems.length) return res.status(400).json({ error: "Cart is empty" });
@@ -1155,7 +1218,7 @@ app.post("/api/orders", authenticate, async (req, res) => {
 
   const order = {
     id: genId("ord"), userId: req.userId, items, subtotal, coinDiscount, charityAmount: charity,
-    total, address: address || "", status: "confirmed", created_at: new Date().toISOString(),
+    total, address: address || "", paymentMethod: paymentMethod || "razorpay", status: "confirmed", created_at: new Date().toISOString(),
   };
   await dbCreate("orders", order.id, order);
   await dbPut("carts", req.userId, { items: [] });
@@ -1485,8 +1548,24 @@ app.put("/api/vendor/bookings/:id/accept", authenticate, async (req, res) => {
   if (req.user?.role !== "vendor") return res.status(403).json({ error: "Vendor only" });
   const bk = await dbGetById("bookings", req.params.id);
   if (!bk) return res.status(404).json({ error: "Booking not found" });
-  await dbMerge("bookings", bk.id, { status: "confirmed", vendorAccepted: true });
-  res.json({ success: true, booking: { ...bk, status: "confirmed", vendorAccepted: true } });
+  if (bk.status !== "pending" && bk.status !== "upcoming") return res.status(400).json({ error: "Booking cannot be accepted" });
+
+  // Find the vendor record for this user
+  const allVendors = await dbAll("vendors");
+  const myVendor = allVendors.find(v => v.email === req.user.email || v.userId === req.userId);
+  const vendorId = myVendor?.id || null;
+
+  await dbMerge("bookings", bk.id, { status: "upcoming", vendorId, vendorAccepted: true });
+  // Notify the customer that a vendor accepted their booking
+  const svc = await dbGetById("services", bk.serviceId);
+  notifyCustomer(bk.userId, {
+    type: "booking_accepted",
+    booking: { ...bk, status: "upcoming", vendorId, vendorAccepted: true },
+    vendorName: myVendor?.name || "A provider",
+    serviceName: svc?.name || bk.serviceName || "Service",
+    message: `${myVendor?.name || "A provider"} accepted your ${svc?.name || "service"} booking for ${bk.date} at ${bk.time}`,
+  });
+  res.json({ success: true, booking: { ...bk, status: "upcoming", vendorId, vendorAccepted: true } });
 });
 
 app.put("/api/vendor/bookings/:id/decline", authenticate, async (req, res) => {
@@ -1631,7 +1710,7 @@ app.get("/api/health", (_req, res) => {
 
 // ── Global error handler (prevents crash on unhandled route errors) ──
 app.use((err, _req, res, _next) => {
-  console.error("Unhandled route error:", err?.message || err);
+  console.error("Unhandled route error:", err);
   res.status(500).json({ error: "Internal server error" });
 });
 

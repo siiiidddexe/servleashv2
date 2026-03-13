@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 
 // Shared auth pages (unified — single login for all roles)
@@ -7,6 +7,7 @@ import OtpVerify from "./pages/shared/OtpVerify";
 import Signup from "./pages/shared/Signup";
 import ForgotPassword from "./pages/shared/ForgotPassword";
 import ResetPassword from "./pages/shared/ResetPassword";
+import Onboarding from "./pages/shared/Onboarding";
 
 // Customer
 import CustomerSplash from "./pages/customer/CustomerSplash";
@@ -56,14 +57,20 @@ import VendorBookings from "./pages/vendor/VendorBookings";
 import VendorEarnings from "./pages/vendor/VendorEarnings";
 import VendorProfile from "./pages/vendor/VendorProfile";
 
+function OnboardingGate() {
+  const seen = localStorage.getItem("servleash_onboarded");
+  return seen ? <Login /> : <Navigate to="/onboarding" replace />;
+}
+
 export default function App() {
   const location = useLocation();
 
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* ── Root → Login ── */}
-        <Route path="/" element={<Login />} />
+        {/* ── Root → Onboarding (first visit) or Login (returning) ── */}
+        <Route path="/" element={<OnboardingGate />} />
+        <Route path="/onboarding" element={<Onboarding />} />
 
         {/* ── Unified auth (single login page for all roles) ── */}
         <Route path="/login" element={<Login />} />

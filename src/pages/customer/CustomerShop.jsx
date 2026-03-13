@@ -1,12 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, ShoppingCart, SlidersHorizontal, Star, Plus } from "lucide-react";
+import { Search, ShoppingCart, SlidersHorizontal, Star, Plus, Check } from "lucide-react";
 import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
 
-const cats = ["All", "Food", "Toys", "Treats", "Hygiene", "Accessories"];
+const PLACEHOLDER = "https://cdn.dribbble.com/userupload/3848536/file/original-4f623bccd6f252547abb165cb87a86ae.jpeg?resize=2048x1572&vertical=center";
+const getImageSrc = (img) => {
+  if (!img) return PLACEHOLDER;
+  if (img.startsWith("http")) return img;
+  return `/api${img}`;
+};
 
 export default function CustomerShop() {
   const nav = useNavigate();
@@ -16,13 +21,22 @@ export default function CustomerShop() {
   const [searchQ, setSearchQ] = useState("");
   const [adding, setAdding] = useState(null);
 
+  const [cats, setCats] = useState(["All"]);
+
+  useEffect(() => {
+    // Fetch dynamic categories
+    fetch("/api/products/categories").then(r => r.json()).then(c => {
+      setCats(["All", ...c]);
+    }).catch(() => {});
+  }, []);
+
   const fetchProducts = async (cat) => {
     setLoading(true);
     try { const p = await api.getProducts(cat); setProducts(p); } catch {}
     setLoading(false);
   };
 
-  useEffect(() => { fetchProducts(cats[active]); }, [active]);
+  useEffect(() => { fetchProducts(cats[active]); }, [active, cats]);
 
   const filtered = searchQ
     ? products.filter(p => p.name.toLowerCase().includes(searchQ.toLowerCase()))
@@ -101,8 +115,8 @@ export default function CustomerShop() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
             >
-              <div className="h-28 rounded-xl bg-gradient-to-br from-teal-500/5 to-teal-50 flex items-center justify-center">
-                <ShoppingCart size={28} className="text-brand-orange/30" />
+              <div className="h-28 rounded-xl bg-gray-100 overflow-hidden">
+                <img src={getImageSrc(p.image)} alt={p.name} className="h-full w-full object-cover" />
               </div>
               <h3 className="mt-3 text-[13px] font-bold text-brand-dark truncate">{p.name}</h3>
               <div className="mt-1 flex items-center gap-1">
@@ -117,8 +131,8 @@ export default function CustomerShop() {
                     <span className="ml-1.5 text-[11px] text-brand-light line-through">₹{p.mrp}</span>
                   )}
                 </div>
-                <button onClick={() => handleAddToCart(p.id)} className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${adding === p.id ? "bg-brand-green" : "bg-brand-dark"}`}>
-                  <Plus size={16} className="text-white" />
+                <button onClick={() => handleAddToCart(p.id)} className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${adding === p.id ? "bg-teal-500 scale-110" : "bg-brand-dark"}`}>
+                  {adding === p.id ? <Check size={14} className="text-white" /> : <Plus size={16} className="text-white" />}
                 </button>
               </div>
               {p.mrp > p.price && (

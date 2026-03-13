@@ -57,6 +57,7 @@ export const api = {
   // Products
   getProducts: (category) => request(`/products${category && category !== "All" ? `?category=${encodeURIComponent(category)}` : ""}`),
   getProduct: (id) => request(`/products/${id}`),
+  getProductCategories: () => request("/products/categories"),
 
   // Pets (breeder gallery)
   getPets: () => request("/pets"),
