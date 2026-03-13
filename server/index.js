@@ -60,7 +60,11 @@ async function dbQuery(query, vars) {
   try {
     return await db.query(query, vars);
   } catch (err) {
-    const isNotFound = err?.kind === "NotFound" || /does not exist/i.test(err?.message);
+    const isNotFound = err?.kind === "NotFound"
+      || /does not exist/i.test(err?.message)
+      || /not defined/i.test(err?.message)
+      || /table .* not found/i.test(err?.message)
+      || /unknown table/i.test(err?.message);
     if (isNotFound && /^\s*(SELECT|DELETE)/i.test(query)) return [[]];
     // Auto-create missing table for any write operation and retry
     if (isNotFound) {
@@ -324,69 +328,79 @@ async function authenticate(req, res, next) {
 
 // ── Register (email + password + name) → sends OTP ────
 app.post("/api/auth/register", async (req, res) => {
-  const { email, password, name, phone, city, role } = req.body;
-  if (!email || !password) return res.status(400).json({ error: "email and password required" });
-  if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
-  const r = role || "customer";
+  try {
+    const { email, password, name, phone, city, role } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "email and password required" });
+    if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+    const r = role || "customer";
 
-  const [existingArr] = await dbQuery(
-    `SELECT * FROM users WHERE email = $email AND role = $role LIMIT 1`,
-    { email, role: r }
-  );
-  const existing = normalizeRecord(existingArr?.[0] ?? null);
+    const [existingArr] = await dbQuery(
+      `SELECT * FROM users WHERE email = $email AND role = $role LIMIT 1`,
+      { email, role: r }
+    );
+    const existing = normalizeRecord(existingArr?.[0] ?? null);
 
-  if (existing && existing.password) return res.status(409).json({ error: "Account already exists. Please login." });
+    if (existing && existing.password) return res.status(409).json({ error: "Account already exists. Please login." });
 
-  if (existing && !existing.password) {
-    // User exists via old OTP-only flow — set password now
-    await dbMerge("users", existing.id, {
-      password: hashPassword(password),
-      ...(name ? { name } : {}),
-      ...(phone ? { phone } : {}),
-      ...(city ? { city } : {}),
+    if (existing && !existing.password) {
+      // User exists via old OTP-only flow — set password now
+      await dbMerge("users", existing.id, {
+        password: hashPassword(password),
+        ...(name ? { name } : {}),
+        ...(phone ? { phone } : {}),
+        ...(city ? { city } : {}),
+      });
+    } else {
+      const user = {
+        id: genId("user"), email, role: r,
+        name: name || "User", phone: phone || null, city: city || null,
+        avatar: null, password: hashPassword(password), verified: false,
+        created_at: new Date().toISOString(),
+      };
+      await dbCreate("users", user.id, user);
+    }
+
+    const code = genOtp();
+    otps.set(`${r}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
+    const sent = await sendOtpEmail(email, code);
+    res.json({ success: true, message: "Account created. Verify your email.", emailSent: sent,
+      ...((!sent && process.env.NODE_ENV !== "production") ? { devCode: code } : {}),
     });
-  } else {
-    const user = {
-      id: genId("user"), email, role: r,
-      name: name || "User", phone: phone || null, city: city || null,
-      avatar: null, password: hashPassword(password), verified: false,
-      created_at: new Date().toISOString(),
-    };
-    await dbCreate("users", user.id, user);
+  } catch (err) {
+    console.error("Register error:", err);
+    res.status(500).json({ error: "Registration failed. Please try again." });
   }
-
-  const code = genOtp();
-  otps.set(`${r}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
-  const sent = await sendOtpEmail(email, code);
-  res.json({ success: true, message: "Account created. Verify your email.", emailSent: sent,
-    ...((!sent && process.env.NODE_ENV !== "production") ? { devCode: code } : {}),
-  });
 });
 
 // ── Login (email + password) → sends OTP ──────────────
 app.post("/api/auth/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: "email and password required" });
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ error: "email and password required" });
 
-  const [arr] = await dbQuery(
-    `SELECT * FROM users WHERE email = $email LIMIT 1`,
-    { email }
-  );
-  const user = normalizeRecord(arr?.[0] ?? null);
-  if (!user) return res.status(401).json({ error: "Account not found. Please register first." });
+    const [arr] = await dbQuery(
+      `SELECT * FROM users WHERE email = $email LIMIT 1`,
+      { email }
+    );
+    const user = normalizeRecord(arr?.[0] ?? null);
+    if (!user) return res.status(401).json({ error: "Account not found. Please register first." });
 
-  if (!user.password) {
-    await dbMerge("users", user.id, { password: hashPassword(password) });
-  } else if (!verifyPassword(password, user.password)) {
-    return res.status(401).json({ error: "Invalid password" });
+    if (!user.password) {
+      await dbMerge("users", user.id, { password: hashPassword(password) });
+    } else if (!verifyPassword(password, user.password)) {
+      return res.status(401).json({ error: "Invalid password" });
+    }
+
+    const code = genOtp();
+    otps.set(`${user.role}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
+    const sent = await sendOtpEmail(email, code);
+    res.json({ success: true, message: "Password verified. OTP sent.", role: user.role, emailSent: sent,
+      ...((!sent && process.env.NODE_ENV !== "production") ? { devCode: code } : {}),
+    });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ error: "Login failed. Please try again." });
   }
-
-  const code = genOtp();
-  otps.set(`${user.role}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
-  const sent = await sendOtpEmail(email, code);
-  res.json({ success: true, message: "Password verified. OTP sent.", role: user.role, emailSent: sent,
-    ...((!sent && process.env.NODE_ENV !== "production") ? { devCode: code } : {}),
-  });
 });
 
 // ── Legacy: request-otp ────────────────────────────────
