@@ -32,7 +32,14 @@ services:
       - backend
     expose:
       - "80"
+    networks:
+      - default
+      - dokploy-network
 
 volumes:
   surrealdb_data:
   uploads_data:
+
+networks:
+  dokploy-network:
+    external: true
