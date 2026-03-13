@@ -300,6 +300,34 @@ async function sendResetEmail(email, resetLink) {
   } catch (err) { console.warn("📧 Mail API unreachable:", err.message); return false; }
 }
 
+async function sendVendorPendingNotification(adminEmail, vendorName, vendorEmail) {
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (MAIL_API_KEY) headers["X-API-Key"] = MAIL_API_KEY;
+    await fetch(`${MAIL_API_URL}/api/send-notification`, {
+      method: "POST", headers,
+      body: JSON.stringify({ to: adminEmail, subject: "New vendor pending approval", vendor_name: vendorName, vendor_email: vendorEmail, app_name: "Servleash" }),
+      signal: AbortSignal.timeout(5000),
+    });
+    console.log(`📧 Admin notified of new vendor sign-up: ${vendorName} (${vendorEmail})`);
+    return true;
+  } catch (err) { console.warn("📧 Vendor notification email failed:", err.message); return false; }
+}
+
+async function sendVendorApprovedEmail(vendorEmail, vendorName) {
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (MAIL_API_KEY) headers["X-API-Key"] = MAIL_API_KEY;
+    await fetch(`${MAIL_API_URL}/api/send-notification`, {
+      method: "POST", headers,
+      body: JSON.stringify({ to: vendorEmail, subject: "Your Servleash vendor account is approved!", vendor_name: vendorName, message: `Hi ${vendorName}, your vendor account has been approved. You can now log in and start accepting bookings!`, app_name: "Servleash" }),
+      signal: AbortSignal.timeout(5000),
+    });
+    console.log(`📧 Approval email sent to vendor ${vendorEmail}`);
+    return true;
+  } catch (err) { console.warn("📧 Vendor approval email failed:", err.message); return false; }
+}
+
 // ── Auth middleware ────────────────────────────────────
 async function authenticate(req, res, next) {
   const auth = req.headers.authorization;
@@ -310,6 +338,9 @@ async function authenticate(req, res, next) {
     if (!session) return res.status(401).json({ error: "Session expired" });
     const user = await dbGetById("users", session.userId);
     if (!user) return res.status(401).json({ error: "Session expired" });
+    if (user.role === "vendor" && user.approved === false) {
+      return res.status(403).json({ error: "Your vendor account is pending admin approval." });
+    }
     req.userId = session.userId;
     req.user = user;
     next();
@@ -344,15 +375,24 @@ app.post("/api/auth/register", async (req, res) => {
       ...(name ? { name } : {}),
       ...(phone ? { phone } : {}),
       ...(city ? { city } : {}),
+      ...(r === "vendor" && existing.approved === undefined ? { approved: false } : {}),
     });
   } else {
     const user = {
       id: genId("user"), email, role: r,
       name: name || "User", phone: phone || null, city: city || null,
       avatar: null, password: hashPassword(password), verified: false,
+      ...(r === "vendor" ? { approved: false } : {}),
       created_at: new Date().toISOString(),
     };
     await dbCreate("users", user.id, user);
+
+    if (r === "vendor") {
+      const [adminArr] = await dbQuery(`SELECT * FROM users WHERE role = "admin" LIMIT 5`, {});
+      for (const admin of normalizeRecords(adminArr)) {
+        if (admin?.email) await sendVendorPendingNotification(admin.email, name || "New Vendor", email);
+      }
+    }
   }
 
   const code = genOtp();
@@ -379,6 +419,10 @@ app.post("/api/auth/login", async (req, res) => {
     await dbMerge("users", user.id, { password: hashPassword(password) });
   } else if (!verifyPassword(password, user.password)) {
     return res.status(401).json({ error: "Invalid password" });
+  }
+
+  if (user.role === "vendor" && user.approved === false) {
+    return res.status(403).json({ error: "Your vendor account is pending admin approval. You will be notified by email once approved." });
   }
 
   const code = genOtp();
@@ -437,6 +481,15 @@ app.post("/api/auth/verify-otp", async (req, res) => {
     if (city) updates.city = city;
     await dbMerge("users", user.id, updates);
     user = { ...user, ...updates };
+  }
+
+  // Vendor accounts require admin approval before they can log in
+  if (role === "vendor" && user.approved === false) {
+    return res.json({
+      success: true,
+      pendingApproval: true,
+      message: "Account created! Your vendor account is pending admin approval. You will be notified by email once approved.",
+    });
   }
 
   const token = genToken();
@@ -988,6 +1041,33 @@ app.delete("/api/admin/vendors/:id", authenticate, async (req, res) => {
   const v = await dbGetById("vendors", req.params.id);
   if (!v) return res.status(404).json({ error: "Vendor not found" });
   await dbDelete("vendors", req.params.id);
+  res.json({ success: true });
+});
+
+// ── Admin: Pending Vendor Approvals ────────────────
+app.get("/api/admin/pending-vendors", authenticate, async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Admin only" });
+  const [arr] = await dbQuery(
+    `SELECT * FROM users WHERE role = $role AND approved = $approved`,
+    { role: "vendor", approved: false }
+  );
+  res.json(normalizeRecords(arr));
+});
+
+app.put("/api/admin/pending-vendors/:id/approve", authenticate, async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Admin only" });
+  const user = await dbGetById("users", req.params.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  await dbMerge("users", req.params.id, { approved: true });
+  await sendVendorApprovedEmail(user.email, user.name);
+  res.json({ success: true });
+});
+
+app.put("/api/admin/pending-vendors/:id/reject", authenticate, async (req, res) => {
+  if (req.user?.role !== "admin") return res.status(403).json({ error: "Admin only" });
+  const user = await dbGetById("users", req.params.id);
+  if (!user) return res.status(404).json({ error: "User not found" });
+  await dbDelete("users", req.params.id);
   res.json({ success: true });
 });
 

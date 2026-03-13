@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Phone, Mail, MapPin, Lock, Eye, EyeOff, PawPrint } from "lucide-react";
+import { User, Phone, Mail, MapPin, Lock, Eye, EyeOff, PawPrint, Gift } from "lucide-react";
 import PageWrap from "../../components/PageWrap";
 import { api } from "../../lib/api";
 
@@ -20,6 +20,7 @@ export default function Signup() {
   const [city, setCity] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,7 +36,7 @@ export default function Signup() {
     setError("");
     try {
       const data = await api.register(email, password, role, { name, phone, city });
-      nav("/otp", { state: { email, role, name, phone, city, devCode: data.devCode } });
+      nav("/otp", { state: { email, role, name, phone, city, devCode: data.devCode, referralCode: referralCode.trim() || null } });
     } catch (err) {
       setError(err.message || "Registration failed");
     }
@@ -120,6 +121,21 @@ export default function Signup() {
               <p className="mt-1 text-[12px] text-brand-red">Passwords don't match</p>
             )}
           </div>
+
+          {/* Referral Code — customers only */}
+          {role === "customer" && (
+            <div>
+              <label className="block mb-1.5 text-[13px] font-semibold text-brand-medium">
+                Referral Code <span className="text-[11px] font-normal text-brand-light">(optional — earn 50 coins)</span>
+              </label>
+              <div className="relative">
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-light"><Gift size={18} /></span>
+                <input type="text" placeholder="e.g. SL4a2f" value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  className="input-field" style={{ paddingLeft: "2.75rem" }} />
+              </div>
+            </div>
+          )}
         </motion.div>
 
         <motion.label className="mt-4 flex items-start gap-3 cursor-pointer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { api } from "../../lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Pencil, Trash2, X, MapPin, Phone, Upload, Image as ImageIcon, Check } from "lucide-react";
+import { Plus, Pencil, Trash2, X, MapPin, Phone, Upload, Image as ImageIcon, Check, Clock, UserCheck, UserX } from "lucide-react";
 import AdminNav from "../../components/AdminNav";
 import ImageCropper from "../../components/ImageCropper";
 
@@ -117,18 +117,39 @@ function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
 export default function AdminVendors() {
   const [vendors, setVendors] = useState([]);
   const [services, setServices] = useState([]);
+  const [pendingVendors, setPendingVendors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null); // null | "new" | vendor obj
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(null);
+  const [actioning, setActioning] = useState(null); // id being approved/rejected
 
   const load = () => {
     setLoading(true);
-    Promise.all([api.getVendors(), api.getServices()])
-      .then(([v, s]) => { setVendors(v); setServices(s); setLoading(false); })
+    Promise.all([api.getVendors(), api.getServices(), api.getPendingVendors()])
+      .then(([v, s, p]) => { setVendors(v); setServices(s); setPendingVendors(p); setLoading(false); })
       .catch(() => setLoading(false));
   };
   useEffect(() => { load(); }, []);
+
+  const handleApprove = async (id) => {
+    setActioning(id);
+    try {
+      await api.approveVendorAccount(id);
+      setPendingVendors(prev => prev.filter(v => v.id !== id));
+    } catch (e) { alert(e.message); }
+    setActioning(null);
+  };
+
+  const handleReject = async (id) => {
+    if (!confirm("Reject and delete this vendor account?")) return;
+    setActioning(id);
+    try {
+      await api.rejectVendorAccount(id);
+      setPendingVendors(prev => prev.filter(v => v.id !== id));
+    } catch (e) { alert(e.message); }
+    setActioning(null);
+  };
 
   const handleSave = async (data) => {
     setSaving(true);
@@ -191,6 +212,43 @@ export default function AdminVendors() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Pending Approvals */}
+      {pendingVendors.length > 0 && (
+        <div className="px-5 mt-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={14} className="text-brand-orange" />
+            <h2 className="text-[13px] font-bold text-brand-dark uppercase tracking-wide">Pending Approvals ({pendingVendors.length})</h2>
+          </div>
+          <div className="space-y-2">
+            {pendingVendors.map((v) => (
+              <motion.div key={v.id} className="bg-orange-50 border border-orange-200 rounded-2xl p-4"
+                initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-bold text-brand-dark truncate">{v.name}</p>
+                    <p className="text-[12px] text-brand-medium">{v.email}</p>
+                    {v.phone && <p className="text-[11px] text-brand-light flex items-center gap-1 mt-0.5"><Phone size={10} /> {v.phone}</p>}
+                    {v.city && <p className="text-[11px] text-brand-light flex items-center gap-1"><MapPin size={10} /> {v.city}</p>}
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button onClick={() => handleApprove(v.id)} disabled={actioning === v.id}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-green-500 text-white text-[12px] font-semibold disabled:opacity-50">
+                      {actioning === v.id ? <span className="spinner !h-3 !w-3" /> : <UserCheck size={13} />}
+                      Approve
+                    </button>
+                    <button onClick={() => handleReject(v.id)} disabled={actioning === v.id}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-100 text-brand-red text-[12px] font-semibold disabled:opacity-50">
+                      <UserX size={13} />
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* List */}
       <div className="px-5 mt-4 space-y-3">

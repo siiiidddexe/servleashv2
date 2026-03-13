@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShieldCheck, Mail } from "lucide-react";
+import { ShieldCheck, Mail, Clock } from "lucide-react";
 import PageWrap from "../../components/PageWrap";
 import BackBtn from "../../components/BackBtn";
 import OtpInput from "../../components/OtpInput";
@@ -16,23 +16,40 @@ export default function OtpVerify() {
   const email = location.state?.email || "user@example.com";
   const role = location.state?.role || "customer";
   const fromReset = location.state?.fromReset || false;
+  const referralCode = location.state?.referralCode || null;
   const signupData = {
     name: location.state?.name || null,
     phone: location.state?.phone || null,
     city: location.state?.city || null,
   };
+  const isSignup = !!signupData.name;
 
   const [error, setError] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
+  const [pendingApproval, setPendingApproval] = useState(false);
 
   const handleComplete = async (code) => {
     setError("");
     setVerifying(true);
     try {
       const data = await api.verifyOtp(email, role, code, signupData);
+
+      // Vendor account created but awaiting admin approval
+      if (data.pendingApproval) {
+        setPendingApproval(true);
+        setVerifying(false);
+        return;
+      }
+
       login(data.user, data.token);
+
+      // Apply referral code silently after signup (token is now in localStorage)
+      if (isSignup && referralCode) {
+        try { await api.useReferral(referralCode); } catch { /* invalid code — ignore */ }
+      }
+
       // Route based on role
       const homeMap = { admin: "/admin/home", vendor: "/vendor/home", customer: "/customer/home" };
       nav(homeMap[role] || "/customer/home", { replace: true });
@@ -54,6 +71,32 @@ export default function OtpVerify() {
   };
 
   const maskedEmail = email.replace(/(.{2})(.*)(@)/, (_, a, b, c) => a + "*".repeat(Math.min(b.length, 5)) + c);
+
+  if (pendingApproval) {
+    return (
+      <PageWrap>
+        <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-white px-6 pb-8">
+          <motion.div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50"
+            initial={{ scale: 0.5, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.4 }}>
+            <Clock size={32} className="text-brand-orange" />
+          </motion.div>
+          <motion.h1 className="mt-6 text-[24px] font-extrabold text-brand-dark text-center"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            Account Under Review
+          </motion.h1>
+          <motion.p className="mt-3 text-[14px] text-brand-medium text-center leading-relaxed"
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+            Your vendor account has been created and is pending admin approval. You will receive an email once your account is approved.
+          </motion.p>
+          <motion.button className="mt-8 btn-primary w-full"
+            onClick={() => nav("/login")}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+            Back to Login
+          </motion.button>
+        </div>
+      </PageWrap>
+    );
+  }
 
   return (
     <PageWrap>
