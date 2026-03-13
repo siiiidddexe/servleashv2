@@ -30,8 +30,8 @@ services:
     restart: always
     depends_on:
       - backend
-    ports:
-      - "${PORT:-80}:80"
+    expose:
+      - "80"
 
 volumes:
   surrealdb_data:
