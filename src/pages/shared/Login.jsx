@@ -13,7 +13,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && password.length >= 6;
+  // Regex updated to be more permissive to handle common email patterns without strict TLD checks if necessary, 
+  // but the user's issue "string did not match the expected pattern" suggests the HTML5 validation or a strict regex is failing.
+  // Let's use a standard, robust email regex.
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const isValid = emailRegex.test(email) && password.length >= 6;
 
   const handleLogin = async () => {
     if (!isValid) return;

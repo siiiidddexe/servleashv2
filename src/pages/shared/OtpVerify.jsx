@@ -45,10 +45,15 @@ export default function OtpVerify() {
   const handleResend = async () => {
     setResending(true);
     setResent(false);
+    setError("");
     try {
-      await api.requestOtp(email, role);
+      // Changed from requestOtp to resendOtp which just resends the existing code or generates new one based on session context
+      // But based on backend, we have /api/auth/resend-otp
+      await api.resendOtp(email, role); 
       setResent(true);
-    } catch {}
+    } catch (err) {
+      setError(err.message || "Failed to resend code");
+    }
     setResending(false);
     setTimeout(() => setResent(false), 4000);
   };

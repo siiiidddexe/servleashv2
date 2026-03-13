@@ -386,11 +386,15 @@ app.post("/api/auth/login", async (req, res) => {
     if (!user) return res.status(401).json({ error: "Account not found. Please register first." });
 
     if (!user.password) {
+      // If user has no password (migrated from OTP-only), set it now.
+      // Ideally we should verify via OTP before setting a password, but following current logic:
       await dbMerge("users", user.id, { password: hashPassword(password) });
     } else if (!verifyPassword(password, user.password)) {
+      // 🛑 STOP: Incorrect password. Do NOT send OTP.
       return res.status(401).json({ error: "Invalid password" });
     }
 
+    // Password is correct (or just set). Now proceed to OTP.
     const code = genOtp();
     otps.set(`${user.role}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
     const sent = await sendOtpEmail(email, code);
@@ -403,22 +407,13 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// ── Legacy: request-otp ────────────────────────────────
-app.post("/api/auth/request-otp", async (req, res) => {
-  const { email, role } = req.body;
-  if (!email || !role) return res.status(400).json({ error: "email and role required" });
-
-  const code = genOtp();
-  otps.set(`${role}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
-
-  const sent = await sendOtpEmail(email, code);
-  res.json({
-    success: true,
-    message: sent ? "Verification code sent to your email" : "OTP generated (email service unavailable)",
-    emailSent: sent,
-    ...((!sent && process.env.NODE_ENV !== "production") ? { devCode: code } : {}),
-  });
-});
+// ── Legacy: request-otp (REMOVED to enforce password login) ──
+// app.post("/api/auth/request-otp", async (req, res) => {
+//   // Implementation removed to prevent unauthenticated OTP generation for login.
+//   // Use /login (password+otp) or /register instead.
+//   // For resending, use /resend-otp.
+//   res.status(410).json({ error: "Endpoint deprecated. Use login or register." });
+// });
 
 app.post("/api/auth/verify-otp", async (req, res) => {
   const { email, role, code, name, phone, city } = req.body;
@@ -473,6 +468,13 @@ app.post("/api/auth/logout", authenticate, async (req, res) => {
 app.post("/api/auth/resend-otp", async (req, res) => {
   const { email, role } = req.body;
   if (!email || !role) return res.status(400).json({ error: "email and role required" });
+
+  // SECURITY: Only allow resend if there is an active OTP session (created by Login/Register).
+  // This prevents unauthenticated users from generating OTPs.
+  if (!otps.has(`${role}:${email}`)) {
+    return res.status(403).json({ error: "Session expired. Please login again." });
+  }
+
   const code = genOtp();
   otps.set(`${role}:${email}`, { code, expires: new Date(Date.now() + 10 * 60 * 1000) });
   const sent = await sendOtpEmail(email, code);

@@ -25,7 +25,8 @@ export default function Signup() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const emailValid = emailRegex.test(email);
   const pwMatch = password.length >= 6 && password === confirmPw;
   const isValid = name.trim() && emailValid && pwMatch;
 
