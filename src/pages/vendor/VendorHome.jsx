@@ -12,16 +12,29 @@ export default function VendorHome() {
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [completing, setCompleting] = useState(null);
 
-  useEffect(() => {
+  const fetchData = () => {
+    setLoading(true);
     Promise.all([api.getVendorStats(), api.getVendorBookings()])
       .then(([s, b]) => { setStats(s); setBookings(b); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  };
+
+  useEffect(() => { fetchData(); }, []);
+
+  const handleComplete = async (id) => {
+    setCompleting(id);
+    try {
+      await api.completeBooking(id);
+      fetchData();
+    } catch { /* */ }
+    setCompleting(null);
+  };
 
   const cards = stats ? [
-    { icon: CalendarCheck, label: "Today's Bookings", value: stats.todayBookings, color: "#FC8019" },
+    { icon: CalendarCheck, label: "Today's Bookings", value: stats.todayBookings, color: "#14B8A6" },
     { icon: DollarSign, label: "Revenue", value: `₹${stats.revenue.toLocaleString()}`, color: "#48c78e" },
     { icon: Star, label: "Rating", value: stats.rating, color: "#f59e0b" },
     { icon: Scissors, label: "Services", value: stats.servicesCount, color: "#4285F4" },
@@ -107,7 +120,10 @@ export default function VendorHome() {
                     <div className="flex items-center justify-between mt-3 pt-3 border-t border-brand-border/50">
                       <span className="text-[14px] font-bold text-brand-dark">₹{b.amount}</span>
                       {b.status === "upcoming" && (
-                        <button className="text-[12px] font-bold text-brand-green">Mark Complete</button>
+                        <button onClick={() => handleComplete(b.id)} disabled={completing === b.id}
+                          className="flex items-center gap-1 rounded-lg bg-brand-green/10 px-3 py-1.5 text-[12px] font-bold text-brand-green disabled:opacity-50">
+                          {completing === b.id ? <><span className="spinner !h-3 !w-3" /> Completing...</> : <>✓ Mark Complete</>}
+                        </button>
                       )}
                     </div>
                   </motion.div>

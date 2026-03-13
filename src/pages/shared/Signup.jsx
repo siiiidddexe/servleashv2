@@ -54,7 +54,7 @@ export default function Signup() {
       <div className="flex min-h-[100dvh] flex-col bg-white px-6 pt-4 pb-8">
         {/* Logo */}
         <motion.div className="mt-6 flex items-center gap-2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-orange">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-dark">
             <PawPrint size={22} className="text-white" />
           </div>
           <span className="font-display text-xl font-bold text-brand-dark">servleash</span>
@@ -69,7 +69,7 @@ export default function Signup() {
         <motion.div className="mt-4 flex gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}>
           {ROLES.map(r => (
             <button key={r.id} onClick={() => setRole(r.id)}
-              className={`flex-1 py-2 rounded-xl text-[13px] font-semibold transition-colors ${role === r.id ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}
+              className={`flex-1 py-2 rounded-xl text-[13px] font-semibold transition-colors ${role === r.id ? "bg-brand-dark text-white" : "bg-brand-bg text-brand-medium"}`}
             >{r.label}</button>
           ))}
         </motion.div>

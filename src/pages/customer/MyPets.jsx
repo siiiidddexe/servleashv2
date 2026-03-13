@@ -1,12 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PawPrint, Plus, Edit2, Trash2, FileText, QrCode, X, ChevronRight, AlertTriangle } from "lucide-react";
+import { PawPrint, Plus, Edit2, Trash2, FileText, QrCode, X, ChevronRight, AlertTriangle, Camera } from "lucide-react";
 import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
 
 const SPECIES_OPTIONS = ["Dog", "Cat", "Bird", "Rabbit", "Fish", "Hamster", "Other"];
+const SPECIES_EMOJI = { Cat: "🐱", Bird: "🐦", Rabbit: "🐰", Fish: "🐟", Hamster: "🐹" };
 
 export default function MyPets() {
   const nav = useNavigate();
@@ -16,6 +17,10 @@ export default function MyPets() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: "", species: "Dog", breed: "", age: "", weight: "", color: "", gender: "Male" });
   const [saving, setSaving] = useState(false);
+  const [petImage, setPetImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef();
 
   const fetchPets = async () => {
     setLoading(true);
@@ -28,25 +33,47 @@ export default function MyPets() {
   const openAdd = () => {
     setEditing(null);
     setForm({ name: "", species: "Dog", breed: "", age: "", weight: "", color: "", gender: "Male" });
+    setPetImage(null); setImagePreview(null);
     setShowForm(true);
   };
 
   const openEdit = (pet) => {
     setEditing(pet.id);
     setForm({ name: pet.name, species: pet.species, breed: pet.breed, age: pet.age, weight: pet.weight, color: pet.color, gender: pet.gender });
+    setPetImage(null); setImagePreview(pet.image || null);
     setShowForm(true);
+  };
+
+  const handlePhotoSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImagePreview(URL.createObjectURL(file));
+    setUploading(true);
+    try {
+      const fd = new FormData(); fd.append("file", file);
+      const res = await api.uploadFile(file);
+      setPetImage(res.url);
+    } catch (err) { console.warn("Upload failed:", err); }
+    setUploading(false);
   };
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.species) return;
     setSaving(true);
     try {
-      if (editing) { await api.updateMyPet(editing, form); }
-      else { await api.createMyPet(form); }
+      const data = { ...form, ...(petImage ? { image: petImage } : {}) };
+      if (editing) { await api.updateMyPet(editing, data); }
+      else { await api.createMyPet(data); }
       setShowForm(false);
       fetchPets();
     } catch { /* */ }
     setSaving(false);
+  };
+
+  const getPetImageSrc = (img) => {
+    if (!img) return null;
+    if (img.startsWith("http")) return img;
+    return `/api${img}`;
   };
 
   const handleDelete = async (id) => {
@@ -62,7 +89,7 @@ export default function MyPets() {
             <BackBtn />
             <h1 className="text-[20px] font-bold text-brand-dark">My Pets</h1>
           </div>
-          <button onClick={openAdd} className="flex items-center gap-1.5 rounded-full bg-brand-orange px-4 py-2 text-[13px] font-bold text-white">
+          <button onClick={openAdd} className="flex items-center gap-1.5 rounded-full bg-brand-dark px-4 py-2 text-[13px] font-bold text-white">
             <Plus size={16} /> Add Pet
           </button>
         </div>
@@ -86,8 +113,12 @@ export default function MyPets() {
               <motion.div key={pet.id} className="rounded-2xl bg-white p-4 shadow-soft"
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <div className="flex items-start gap-3">
-                  <div className="h-14 w-14 shrink-0 rounded-xl bg-purple-50 flex items-center justify-center text-2xl">
-                    {pet.species === "Cat" ? "🐱" : pet.species === "Bird" ? "🐦" : pet.species === "Rabbit" ? "🐰" : pet.species === "Fish" ? "🐟" : "🐶"}
+                  <div className="h-14 w-14 shrink-0 rounded-xl bg-purple-50 flex items-center justify-center text-2xl overflow-hidden">
+                    {getPetImageSrc(pet.image) ? (
+                      <img src={getPetImageSrc(pet.image)} alt={pet.name} className="h-full w-full object-cover" />
+                    ) : (
+                      SPECIES_EMOJI[pet.species] || "🐶"
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -138,6 +169,25 @@ export default function MyPets() {
               </div>
 
               <div className="space-y-4">
+                {/* Photo upload */}
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => fileRef.current?.click()}
+                    className="h-16 w-16 shrink-0 rounded-xl border-2 border-dashed border-brand-border flex items-center justify-center overflow-hidden bg-brand-bg">
+                    {imagePreview ? (
+                      <img src={imagePreview.startsWith("blob:") || imagePreview.startsWith("http") ? imagePreview : `/api${imagePreview}`} alt="" className="h-full w-full object-cover" />
+                    ) : uploading ? (
+                      <span className="spinner" />
+                    ) : (
+                      <Camera size={20} className="text-brand-light" />
+                    )}
+                  </button>
+                  <input ref={fileRef} type="file" className="hidden" accept="image/*" onChange={handlePhotoSelect} />
+                  <div className="flex-1">
+                    <p className="text-[12px] font-semibold text-brand-dark">Pet Photo</p>
+                    <p className="text-[11px] text-brand-light">Tap to upload a photo</p>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block mb-1.5 text-[13px] font-semibold text-brand-medium">Pet Name *</label>
                   <input type="text" value={form.name} onChange={e => setForm(p => ({...p, name: e.target.value}))} className="input-field" placeholder="e.g. Buddy" />

@@ -28,8 +28,8 @@ export default function VendorBookings() {
   };
 
   const tabs = [
-    { key: "pending", label: "Pending", icon: Clock },
-    { key: "confirmed", label: "Confirmed", icon: CheckCircle },
+    { key: "pending", label: "New Requests", icon: Clock },
+    { key: "upcoming", label: "Confirmed", icon: CheckCircle },
     { key: "completed", label: "Done", icon: Check },
     { key: "cancelled", label: "Cancelled", icon: XCircle },
   ];
@@ -38,9 +38,10 @@ export default function VendorBookings() {
 
   const statusColors = {
     pending: "bg-yellow-50 text-yellow-600",
-    confirmed: "bg-blue-50 text-blue-600",
+    upcoming: "bg-blue-50 text-blue-600",
     completed: "bg-green-50 text-brand-green",
     cancelled: "bg-red-50 text-brand-red",
+    declined: "bg-red-50 text-brand-red",
   };
 
   return (
@@ -57,7 +58,7 @@ export default function VendorBookings() {
             const count = bookings.filter(b => b.status === t.key).length;
             return (
               <button key={t.key} onClick={() => setTab(t.key)}
-                className={`shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold transition-colors ${tab === t.key ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}>
+                className={`shrink-0 flex items-center gap-1.5 rounded-full px-4 py-2 text-[12px] font-bold transition-colors ${tab === t.key ? "bg-brand-dark text-white" : "bg-brand-bg text-brand-medium"}`}>
                 <Icon size={14} /> {t.label} ({count})
               </button>
             );
@@ -90,7 +91,7 @@ export default function VendorBookings() {
                 </div>
 
                 <div className="mt-3 flex items-center justify-between">
-                  <p className="text-[16px] font-bold text-brand-orange">₹{b.price}</p>
+                  <p className="text-[16px] font-bold text-brand-orange">₹{b.amount || b.price}</p>
                   <div className="flex gap-2">
                     {b.status === "pending" && (
                       <>
@@ -102,8 +103,8 @@ export default function VendorBookings() {
                         </button>
                       </>
                     )}
-                    {b.status === "confirmed" && (
-                      <button onClick={() => handleAction(b.id, "complete")} className="flex items-center gap-1 rounded-xl bg-brand-orange px-4 py-2 text-[12px] font-bold text-white">
+                    {b.status === "upcoming" && (
+                      <button onClick={() => handleAction(b.id, "complete")} className="flex items-center gap-1 rounded-xl bg-brand-dark px-4 py-2 text-[12px] font-bold text-white">
                         <CheckCircle size={14} /> Complete
                       </button>
                     )}

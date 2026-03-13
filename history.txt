@@ -1,0 +1,15 @@
+#V2
+INFO FOR DB;
+SELECT count() AS total FROM services GROUP ALL;
+SELECT count() AS total FROM vendors GROUP ALL;
+SELECT count() AS total FROM products GROUP ALL;
+SELECT count() AS total FROM breeders GROUP ALL;
+SELECT count() AS total FROM emergency_vets GROUP ALL;
+SELECT count() AS total FROM celebrations GROUP ALL;
+SELECT id, name, category, price FROM services;
+SELECT id, name, category, rating FROM vendors;
+SELECT id, name, category, price FROM products;
+SELECT id, name, breed FROM breeders;
+SELECT id, name, phone FROM emergency_vets;
+SELECT id, name, price FROM celebrations;
+SELECT id, name, email, role, phone, created_at FROM users;

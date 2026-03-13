@@ -103,8 +103,8 @@ export default function BottomNav({ base = "/customer", activeTab = "default" })
   const tabs = TAB_SETS[activeTab] || TAB_SETS.default;
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 bg-white shadow-bottom-bar border-t border-brand-border-light">
-      <div className="flex h-16 items-end justify-around pb-1">
+    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 bg-white border-t border-gray-100 shadow-bottom-bar">
+      <div className="flex h-[60px] items-center justify-around px-2">
         {tabs.map((t) => {
           const full = base + t.path;
           const active = pathname === full || pathname.startsWith(full + "/");
@@ -113,12 +113,20 @@ export default function BottomNav({ base = "/customer", activeTab = "default" })
             <button
               key={t.label}
               onClick={() => nav(full)}
-              className={`flex flex-col items-center gap-0.5 pt-2 pb-1 px-2 transition-colors ${
-                active ? "text-brand-orange" : "text-brand-light"
-              }`}
+              className="relative flex flex-col items-center gap-0.5 px-3 py-1.5 transition-all"
             >
-              <Icon size={22} strokeWidth={active ? 2.2 : 1.6} />
-              <span className={`text-[10px] leading-tight ${active ? "font-bold" : "font-medium"}`}>
+              {/* Active pill indicator */}
+              {active && (
+                <span className="absolute -top-0 left-1/2 -translate-x-1/2 h-0.5 w-6 rounded-full bg-brand-orange" />
+              )}
+              <Icon
+                size={22}
+                strokeWidth={active ? 2.5 : 1.6}
+                className={active ? "text-brand-orange" : "text-brand-light"}
+              />
+              <span className={`text-[10px] leading-tight ${
+                active ? "font-extrabold text-brand-orange" : "font-medium text-brand-light"
+              }`}>
                 {t.label}
               </span>
             </button>

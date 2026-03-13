@@ -37,7 +37,7 @@ export default function VendorEarnings() {
             <p className="text-[11px] text-white/80 mt-2">Total Earned</p>
             <p className="text-[22px] font-bold">₹{data.total}</p>
           </motion.div>
-          <motion.div className="rounded-2xl bg-gradient-to-br from-brand-orange to-amber-500 p-4 text-white shadow-soft"
+          <motion.div className="rounded-2xl bg-gradient-to-br from-teal-500 to-teal-400 p-4 text-white shadow-soft"
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
             <DollarSign size={20} className="text-white/80" />
             <p className="text-[11px] text-white/80 mt-2">Pending</p>
@@ -52,6 +52,12 @@ export default function VendorEarnings() {
           </div>
           <p className="text-[20px] font-bold text-brand-green">₹{data.settled}</p>
           <p className="text-[11px] text-brand-light mt-1">Weekly settlements every Monday</p>
+          <button
+            onClick={() => alert("Payouts are processed weekly every Monday. Your pending amount will be settled automatically.")}
+            className="mt-3 w-full rounded-xl bg-brand-dark py-2.5 text-[13px] font-bold text-white flex items-center justify-center gap-2 active:opacity-80"
+          >
+            <DollarSign size={14} /> Request Payout
+          </button>
         </motion.div>
 
         {/* Revenue split info */}

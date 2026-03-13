@@ -51,7 +51,7 @@ export default function Breeders() {
         <div className="mt-3 flex gap-2 overflow-x-auto no-scrollbar">
           {speciesOptions.map(s => (
             <button key={s} onClick={() => setSpecies(s)}
-              className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-bold transition-colors ${species === s ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}>
+              className={`shrink-0 rounded-full px-4 py-2 text-[12px] font-bold transition-colors ${species === s ? "bg-brand-dark text-white" : "bg-brand-bg text-brand-medium"}`}>
               {s}
             </button>
           ))}

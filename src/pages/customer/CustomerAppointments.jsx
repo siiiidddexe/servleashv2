@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, ChevronRight, X, MapPin, Scissors } from "lucide-react";
+import { Calendar, Clock, X, MapPin, Scissors, AlertTriangle, CheckCircle } from "lucide-react";
 import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
@@ -15,6 +15,8 @@ export default function CustomerAppointments() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
+  const [cancelConfirm, setCancelConfirm] = useState(null); // booking to confirm cancel
+  const [cancelError, setCancelError] = useState("");
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -26,9 +28,26 @@ export default function CustomerAppointments() {
 
   const handleCancel = async (id) => {
     setCancelling(id);
-    try { await api.cancelBooking(id); fetchBookings(); } catch {}
+    setCancelError("");
+    try {
+      await api.cancelBooking(id);
+      setCancelConfirm(null);
+      fetchBookings();
+    } catch (e) {
+      setCancelError(e.message || "Cannot cancel this booking");
+    }
     setCancelling(null);
   };
+
+  const statusColor = (s) =>
+    s === "upcoming" ? "bg-blue-50 text-blue-500" :
+    s === "completed" ? "bg-green-50 text-brand-green" :
+    "bg-red-50 text-brand-red";
+
+  const statusIcon = (s) =>
+    s === "completed" ? <CheckCircle size={20} className="text-brand-green" /> :
+    s === "cancelled" ? <X size={20} className="text-brand-red" /> :
+    <Scissors size={20} className="text-brand-orange" />;
 
   return (
     <div className="min-h-[100dvh] bg-brand-bg pb-20">
@@ -80,17 +99,13 @@ export default function CustomerAppointments() {
                 >
                   <div className="flex items-start gap-3">
                     <div className="h-12 w-12 shrink-0 rounded-xl bg-brand-orange/10 flex items-center justify-center">
-                      <Scissors size={20} className="text-brand-orange" />
+                      {statusIcon(bk.status)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-[15px] font-bold text-brand-dark truncate">{bk.service?.name || "Service"}</h3>
                       <p className="text-[12px] text-brand-light mt-0.5">{bk.vendor?.name || "Vendor"}</p>
                     </div>
-                    <span className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                      bk.status === "upcoming" ? "bg-blue-50 text-blue-500" :
-                      bk.status === "completed" ? "bg-green-50 text-brand-green" :
-                      "bg-red-50 text-brand-red"
-                    }`}>
+                    <span className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold ${statusColor(bk.status)}`}>
                       {bk.status.charAt(0).toUpperCase() + bk.status.slice(1)}
                     </span>
                   </div>
@@ -116,12 +131,10 @@ export default function CustomerAppointments() {
                     <span className="text-[16px] font-bold text-brand-dark">₹{bk.amount}</span>
                     {bk.status === "upcoming" && (
                       <button
-                        onClick={() => handleCancel(bk.id)}
-                        disabled={cancelling === bk.id}
-                        className="flex items-center gap-1 text-[13px] font-semibold text-brand-red disabled:opacity-50"
+                        onClick={() => { setCancelError(""); setCancelConfirm(bk); }}
+                        className="flex items-center gap-1 text-[13px] font-semibold text-brand-red"
                       >
-                        <X size={14} />
-                        {cancelling === bk.id ? "Cancelling..." : "Cancel"}
+                        <X size={14} /> Cancel Booking
                       </button>
                     )}
                   </div>
@@ -131,6 +144,65 @@ export default function CustomerAppointments() {
           </AnimatePresence>
         )}
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      <AnimatePresence>
+        {cancelConfirm && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center px-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="absolute inset-0 bg-black/40" onClick={() => { setCancelConfirm(null); setCancelError(""); }} />
+            <motion.div
+              className="relative w-full max-w-[380px] rounded-2xl bg-white p-5 shadow-xl"
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-12 w-12 rounded-full bg-red-50 flex items-center justify-center">
+                  <AlertTriangle size={24} className="text-brand-red" />
+                </div>
+                <div>
+                  <h3 className="text-[16px] font-bold text-brand-dark">Cancel Booking?</h3>
+                  <p className="text-[12px] text-brand-light">{cancelConfirm.service?.name}</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl bg-brand-bg p-3 space-y-2 mb-4">
+                <div className="flex items-center gap-2 text-[12px] text-brand-medium">
+                  <Calendar size={13} /> {cancelConfirm.date} at {cancelConfirm.time}
+                </div>
+                <p className="text-[12px] text-brand-medium font-semibold">₹{cancelConfirm.amount}</p>
+              </div>
+
+              <div className="rounded-xl bg-yellow-50 p-3 mb-4">
+                <p className="text-[11px] text-yellow-800 font-medium leading-relaxed">
+                  ⚠️ <strong>Cancellation Policy:</strong> Bookings cannot be cancelled within 2 hours of the appointment, 
+                  or if booked less than 5 hours before the appointment time. Non-refundable in those cases.
+                </p>
+              </div>
+
+              {cancelError && (
+                <div className="rounded-xl bg-red-50 p-3 mb-4">
+                  <p className="text-[12px] text-brand-red font-medium">{cancelError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setCancelConfirm(null); setCancelError(""); }}
+                  className="btn-outline flex-1"
+                >
+                  Keep Booking
+                </button>
+                <button
+                  onClick={() => handleCancel(cancelConfirm.id)}
+                  disabled={cancelling === cancelConfirm.id}
+                  className="flex-1 rounded-xl bg-brand-red py-3 text-[14px] font-bold text-white disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {cancelling === cancelConfirm.id ? <><span className="spinner !h-4 !w-4" /> Cancelling...</> : <><X size={14} /> Yes, Cancel</>}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <BottomNav base="/customer" />
     </div>

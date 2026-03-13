@@ -35,7 +35,7 @@ export default function AdminRecovery() {
         <div className="flex gap-2 pb-3">
           {["active", "resolved"].map(t => (
             <button key={t} onClick={() => setTab(t)}
-              className={`rounded-full px-5 py-2 text-[12px] font-bold capitalize ${tab === t ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}>
+              className={`rounded-full px-5 py-2 text-[12px] font-bold capitalize ${tab === t ? "bg-brand-dark text-white" : "bg-brand-bg text-brand-medium"}`}>
               {t} ({alerts.filter(a => a.status === t).length})
             </button>
           ))}

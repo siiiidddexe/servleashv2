@@ -6,6 +6,8 @@ import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
 
+const PLACEHOLDER = "https://cdn.dribbble.com/userupload/3848536/file/original-4f623bccd6f252547abb165cb87a86ae.jpeg?resize=2048x1572&vertical=center";
+
 export default function Cart() {
   const nav = useNavigate();
   const [items, setItems] = useState([]);
@@ -47,7 +49,7 @@ export default function Cart() {
           <div className="mt-12 flex justify-center"><span className="spinner" /></div>
         ) : items.length === 0 ? (
           <motion.div className="mt-16 flex flex-col items-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="h-20 w-20 rounded-full bg-orange-50 flex items-center justify-center">
+            <div className="h-20 w-20 rounded-full bg-teal-50 flex items-center justify-center">
               <ShoppingCart size={36} className="text-brand-orange" />
             </div>
             <h2 className="text-[18px] font-bold text-brand-dark mt-5">Cart is empty</h2>
@@ -60,8 +62,7 @@ export default function Cart() {
               <motion.div key={item.productId} className="rounded-2xl bg-white p-4 shadow-soft flex items-center gap-3"
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
                 <div className="h-16 w-16 shrink-0 rounded-xl bg-brand-bg overflow-hidden">
-                  {item.image ? <img src={item.image} alt="" className="h-full w-full object-cover" /> :
-                    <div className="h-full w-full flex items-center justify-center text-2xl">📦</div>}
+                  <img src={item.image || PLACEHOLDER} alt={item.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-[14px] font-bold text-brand-dark truncate">{item.name}</h3>
@@ -94,7 +95,7 @@ export default function Cart() {
                 <p className="text-[12px] text-brand-light">Total</p>
                 <p className="text-[20px] font-bold text-brand-dark">₹{total}</p>
               </div>
-              <button onClick={() => nav("/customer/checkout")} className="flex items-center gap-2 rounded-full bg-brand-orange px-6 py-3 text-[14px] font-bold text-white active:opacity-80">
+              <button onClick={() => nav("/customer/checkout")} className="flex items-center gap-2 rounded-full bg-brand-dark px-6 py-3 text-[14px] font-bold text-white active:opacity-80">
                 Checkout <ArrowRight size={16} />
               </button>
             </div>

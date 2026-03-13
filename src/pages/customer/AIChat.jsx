@@ -44,7 +44,7 @@ export default function AIChat() {
         <div className="flex items-center gap-3">
           <BackBtn />
           <div className="flex items-center gap-2">
-            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-brand-orange to-amber-400 flex items-center justify-center">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center">
               <Bot size={18} className="text-white" />
             </div>
             <div>
@@ -60,7 +60,7 @@ export default function AIChat() {
         {/* Welcome */}
         {messages.length === 0 && (
           <motion.div className="flex flex-col items-center mt-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand-orange to-amber-400 flex items-center justify-center">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center">
               <Sparkles size={28} className="text-white" />
             </div>
             <h2 className="text-[16px] font-bold text-brand-dark mt-4">Hi! I&apos;m your Pet AI 🐾</h2>
@@ -89,13 +89,13 @@ export default function AIChat() {
           <motion.div key={i} className={`flex gap-2.5 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
             {msg.role === "bot" && (
-              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-brand-orange to-amber-400 flex items-center justify-center">
+              <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center">
                 <Bot size={14} className="text-white" />
               </div>
             )}
             <div className={`max-w-[75%] rounded-2xl px-4 py-2.5 ${
               msg.role === "user"
-                ? "bg-brand-orange text-white rounded-br-md"
+                ? "bg-brand-dark text-white rounded-br-md"
                 : "bg-white text-brand-dark shadow-soft rounded-bl-md"
             }`}>
               <p className="text-[13px] leading-relaxed whitespace-pre-line">{msg.text}</p>
@@ -110,7 +110,7 @@ export default function AIChat() {
 
         {sending && (
           <motion.div className="flex items-center gap-2.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-            <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-brand-orange to-amber-400 flex items-center justify-center">
+            <div className="h-7 w-7 shrink-0 rounded-full bg-gradient-to-br from-teal-500 to-teal-400 flex items-center justify-center">
               <Bot size={14} className="text-white" />
             </div>
             <div className="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-soft">
@@ -131,7 +131,7 @@ export default function AIChat() {
             onKeyDown={e => e.key === "Enter" && !sending && sendMessage()}
             className="input-field flex-1" placeholder="Ask about pet care..." disabled={sending} />
           <button onClick={() => sendMessage()} disabled={sending || !input.trim()}
-            className="h-11 w-11 shrink-0 rounded-full bg-brand-orange flex items-center justify-center disabled:opacity-50">
+            className="h-11 w-11 shrink-0 rounded-full bg-brand-dark flex items-center justify-center disabled:opacity-50">
             <Send size={18} className="text-white" />
           </button>
         </div>

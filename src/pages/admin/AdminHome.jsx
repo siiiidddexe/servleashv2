@@ -15,7 +15,7 @@ export default function AdminHome() {
   }, []);
 
   const cards = stats ? [
-    { icon: Users, label: "Customers", value: stats.customers, color: "#FC8019" },
+    { icon: Users, label: "Customers", value: stats.customers, color: "#14B8A6" },
     { icon: Store, label: "Vendors", value: stats.activeVendors, color: "#48c78e" },
     { icon: ClipboardList, label: "Bookings", value: stats.totalBookings, color: "#4285F4" },
     { icon: DollarSign, label: "Revenue", value: `₹${stats.revenue.toLocaleString()}`, color: "#9b59b6" },
@@ -69,7 +69,7 @@ export default function AdminHome() {
                       </p>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                      u.role === "customer" ? "bg-orange-50 text-brand-orange" :
+                      u.role === "customer" ? "bg-teal-50 text-brand-orange" :
                       u.role === "vendor" ? "bg-green-50 text-brand-green" :
                       "bg-blue-50 text-blue-500"
                     }`}>{u.role}</span>

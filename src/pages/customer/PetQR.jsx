@@ -90,7 +90,7 @@ export default function PetQR() {
           initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${pet.lostMode ? "bg-red-100" : "bg-orange-50"}`}>
+              <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${pet.lostMode ? "bg-red-100" : "bg-teal-50"}`}>
                 <AlertTriangle size={20} className={pet.lostMode ? "text-brand-red" : "text-brand-orange"} />
               </div>
               <div>

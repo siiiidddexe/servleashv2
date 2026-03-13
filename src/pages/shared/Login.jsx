@@ -5,18 +5,11 @@ import { Mail, ArrowRight, Lock, Eye, EyeOff, PawPrint } from "lucide-react";
 import PageWrap from "../../components/PageWrap";
 import { api } from "../../lib/api";
 
-const ROLES = [
-  { id: "customer", label: "Pet Parent" },
-  { id: "vendor", label: "Vendor" },
-  { id: "admin", label: "Admin" },
-];
-
 export default function Login() {
   const nav = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
-  const [role, setRole] = useState("customer");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,9 +20,8 @@ export default function Login() {
     setLoading(true);
     setError("");
     try {
-      const data = await api.login(email, password, role);
-      // Password verified → OTP sent → go to verify
-      nav("/otp", { state: { email, role, devCode: data.devCode } });
+      const data = await api.login(email, password);
+      nav("/otp", { state: { email, role: data.role, devCode: data.devCode } });
     } catch (err) {
       setError(err.message || "Login failed");
     }
@@ -41,7 +33,7 @@ export default function Login() {
       <div className="flex min-h-[100dvh] flex-col bg-white px-6 pt-4 pb-8">
         {/* Logo */}
         <motion.div className="mt-10 flex items-center gap-2" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-orange">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-dark">
             <PawPrint size={22} className="text-white" />
           </div>
           <span className="font-display text-xl font-bold text-brand-dark">servleash</span>
@@ -50,15 +42,6 @@ export default function Login() {
         <motion.div className="mt-8" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <h1 className="text-[28px] font-extrabold text-brand-dark leading-tight">Welcome back</h1>
           <p className="mt-2 text-[15px] text-brand-medium">Sign in with your email &amp; password</p>
-        </motion.div>
-
-        {/* Role tabs */}
-        <motion.div className="mt-6 flex gap-2" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}>
-          {ROLES.map(r => (
-            <button key={r.id} onClick={() => setRole(r.id)}
-              className={`flex-1 py-2 rounded-xl text-[13px] font-semibold transition-colors ${role === r.id ? "bg-brand-orange text-white" : "bg-brand-bg text-brand-medium"}`}
-            >{r.label}</button>
-          ))}
         </motion.div>
 
         <motion.div className="mt-6 space-y-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
@@ -102,7 +85,7 @@ export default function Login() {
         </motion.p>
 
         <motion.div className="mt-2 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
-          <button onClick={() => nav("/forgot-password", { state: { role } })} className="text-[13px] text-brand-orange font-semibold hover:underline">
+          <button onClick={() => nav("/forgot-password")} className="text-[13px] text-brand-orange font-semibold hover:underline">
             Forgot password?
           </button>
         </motion.div>

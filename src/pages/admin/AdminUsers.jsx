@@ -5,7 +5,7 @@ import { User, Mail, Shield, Store, Users as UsersIcon } from "lucide-react";
 import AdminNav from "../../components/AdminNav";
 
 const ROLE_COLORS = {
-  customer: { bg: "bg-orange-50", text: "text-brand-orange" },
+  customer: { bg: "bg-teal-50", text: "text-brand-orange" },
   vendor: { bg: "bg-green-50", text: "text-brand-green" },
   admin: { bg: "bg-blue-50", text: "text-blue-500" },
 };
@@ -54,7 +54,7 @@ export default function AdminUsers() {
               key={f.key}
               onClick={() => setRoleFilter(f.key)}
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors ${
-                active ? "bg-brand-orange text-white" : "bg-white text-brand-medium border border-brand-border-light"
+                active ? "bg-brand-dark text-white" : "bg-white text-brand-medium border border-brand-border-light"
               }`}
             >
               <Icon size={14} />

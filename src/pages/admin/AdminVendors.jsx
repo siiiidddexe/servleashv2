@@ -91,7 +91,7 @@ function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
                     type="button"
                     onClick={() => toggleService(s.id)}
                     className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-colors ${
-                      on ? "bg-brand-orange text-white border-brand-orange" : "bg-white text-brand-medium border-brand-border"
+                      on ? "bg-brand-dark text-white border-brand-dark" : "bg-white text-brand-medium border-brand-border"
                     }`}
                   >
                     {on && <Check size={12} />}
@@ -166,7 +166,7 @@ export default function AdminVendors() {
           <p className="text-[13px] text-brand-light font-medium">Admin Panel</p>
           <h1 className="text-[22px] font-bold text-brand-dark">Vendors</h1>
         </div>
-        <button onClick={() => setEditing("new")} className="h-10 w-10 rounded-xl bg-brand-orange flex items-center justify-center shadow-md">
+        <button onClick={() => setEditing("new")} className="h-10 w-10 rounded-xl bg-brand-dark flex items-center justify-center shadow-md">
           <Plus size={20} className="text-white" />
         </button>
       </div>

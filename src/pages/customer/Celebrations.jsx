@@ -75,7 +75,7 @@ export default function Celebrations() {
                   <div className="mt-4 flex items-center justify-between">
                     <p className="text-[18px] font-bold text-brand-orange">₹{pkg.price}</p>
                     <button onClick={() => { setShowBook(pkg); setBooked(false); setForm({ petName: "", date: "", notes: "" }); }}
-                      className="rounded-full bg-brand-orange px-5 py-2.5 text-[13px] font-bold text-white active:opacity-80">
+                      className="rounded-full bg-brand-dark px-5 py-2.5 text-[13px] font-bold text-white active:opacity-80">
                       Book Now
                     </button>
                   </div>
