@@ -19,6 +19,8 @@ export default function Login() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const isValid = emailRegex.test(email) && password.length >= 6;
 
+
+
   const handleLogin = async () => {
     if (!isValid) return;
     setLoading(true);

@@ -83,6 +83,18 @@ export default function App() {
         <Route path="/customer/login" element={<Login />} />
         <Route path="/admin/login" element={<Login />} />
         <Route path="/vendor/login" element={<Login />} />
+        <Route path="/customer/signup" element={<Signup />} />
+        <Route path="/admin/signup" element={<Signup />} />
+        <Route path="/vendor/signup" element={<Signup />} />
+        <Route path="/customer/otp" element={<OtpVerify />} />
+        <Route path="/admin/otp" element={<OtpVerify />} />
+        <Route path="/vendor/otp" element={<OtpVerify />} />
+        <Route path="/customer/forgot-password" element={<ForgotPassword />} />
+        <Route path="/admin/forgot-password" element={<ForgotPassword />} />
+        <Route path="/vendor/forgot-password" element={<ForgotPassword />} />
+        <Route path="/customer/reset-password" element={<ResetPassword />} />
+        <Route path="/admin/reset-password" element={<ResetPassword />} />
+        <Route path="/vendor/reset-password" element={<ResetPassword />} />
 
         {/* ── Customer flow ── */}
         <Route path="/customer" element={<CustomerSplash />} />

@@ -6,7 +6,7 @@ async function request(path, options = {}) {
   const token = localStorage.getItem("servleash_token");
   const headers = {
     "Content-Type": "application/json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...((token && !options.skipAuth) ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
   const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
@@ -29,18 +29,18 @@ async function uploadRequest(path, formData) {
 
 export const api = {
   // Auth (password + OTP)
-  register: (email, password, role, extra = {}) => request("/auth/register", { method: "POST", body: JSON.stringify({ email, password, role, ...extra }) }),
-  login: (email, password) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  register: (email, password, role, extra = {}) => request("/auth/register", { method: "POST", body: JSON.stringify({ email, password, role, ...extra }), skipAuth: true }),
+  login: (email, password) => request("/auth/login", { method: "POST", body: JSON.stringify({ email, password }), skipAuth: true }),
   me: () => request("/auth/me"),
-  requestOtp: (email, role) => request("/auth/request-otp", { method: "POST", body: JSON.stringify({ email, role }) }),
-  resendOtp: (email, role) => request("/auth/resend-otp", { method: "POST", body: JSON.stringify({ email, role }) }),
-  verifyOtp: (email, role, code, { name, phone, city } = {}) => request("/auth/verify-otp", { method: "POST", body: JSON.stringify({ email, role, code, name, phone, city }) }),
+  resendOtp: (email, role) => request("/auth/resend-otp", { method: "POST", body: JSON.stringify({ email, role }), skipAuth: true }),
+  
+  verifyOtp: (email, role, code, { name, phone, city } = {}) => request("/auth/verify-otp", { method: "POST", body: JSON.stringify({ email, role, code, name, phone, city }), skipAuth: true }),
   logout: () => request("/auth/logout", { method: "POST" }),
 
   // Password reset
-  requestPasswordReset: (email, role, appUrl) => request("/auth/request-password-reset", { method: "POST", body: JSON.stringify({ email, role, appUrl }) }),
-  verifyResetToken: (token) => request(`/auth/reset-password?token=${encodeURIComponent(token)}`),
-  resetPassword: (token) => request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token }) }),
+  requestPasswordReset: (email, role, appUrl) => request("/auth/request-password-reset", { method: "POST", body: JSON.stringify({ email, role, appUrl }), skipAuth: true }),
+  verifyResetToken: (token) => request(`/auth/reset-password?token=${encodeURIComponent(token)}`, { skipAuth: true }),
+  resetPassword: (token) => request("/auth/reset-password", { method: "POST", body: JSON.stringify({ token }), skipAuth: true }),
 
   // Profile
   getProfile: () => request("/user/profile"),

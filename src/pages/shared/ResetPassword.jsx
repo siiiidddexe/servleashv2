@@ -40,9 +40,10 @@ export default function ResetPassword() {
       setStatus("done");
       // Brief pause so user sees success, then redirect to OTP verify
       setTimeout(() => {
-        nav(`/${result.role}/otp`, {
+        nav("/otp", {
           state: {
             email: result.email,
+            role: result.role,
             fromReset: true,
           },
           replace: true,
@@ -88,13 +89,13 @@ export default function ResetPassword() {
             {errorMsg}
           </p>
           <button
-            onClick={() => nav("/customer/forgot-password")}
+            onClick={() => nav("/forgot-password")}
             className="btn-primary mt-8 w-full max-w-xs"
           >
             Request New Reset Link
           </button>
           <button
-            onClick={() => nav("/customer/login")}
+            onClick={() => nav("/login")}
             className="mt-3 text-[14px] font-semibold text-brand-medium hover:text-brand-dark transition-colors"
           >
             Back to Login
@@ -215,7 +216,7 @@ export default function ResetPassword() {
           transition={{ delay: 0.4 }}
         >
           <button
-            onClick={() => nav(`/${tokenData?.role || "customer"}/login`)}
+            onClick={() => nav("/login")}
             className="text-[14px] font-semibold text-brand-medium hover:text-brand-dark transition-colors"
           >
             Cancel — Back to Login
