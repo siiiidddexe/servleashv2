@@ -110,12 +110,7 @@ export default function ForgotPassword() {
           </p>
         </motion.div>
 
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
-        >
+        <div className="mt-8">
           <label className="block mb-2 text-[13px] font-semibold text-brand-medium">
             Email Address
           </label>
@@ -132,7 +127,6 @@ export default function ForgotPassword() {
               onKeyDown={(e) => e.key === "Enter" && isValid && !loading && handleSubmit()}
               className="input-field"
               style={{ paddingLeft: "2.75rem" }}
-              autoFocus
             />
           </div>
           {error && (
@@ -144,7 +138,7 @@ export default function ForgotPassword() {
               {error}
             </motion.p>
           )}
-        </motion.div>
+        </div>
 
         <motion.button
           className="btn-primary mt-6 flex items-center justify-center gap-2"

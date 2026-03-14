@@ -75,7 +75,7 @@ export default function Signup() {
           ))}
         </motion.div>
 
-        <motion.div className="mt-5 space-y-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+        <div className="mt-5 space-y-4">
           {fields.map((f) => {
             const Icon = f.icon;
             return (
@@ -121,14 +121,14 @@ export default function Signup() {
               <p className="mt-1 text-[12px] text-brand-red">Passwords don't match</p>
             )}
           </div>
-        </motion.div>
+        </div>
 
-        <motion.label className="mt-4 flex items-start gap-3 cursor-pointer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+        <label className="mt-4 flex items-start gap-3 cursor-pointer">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 rounded accent-brand-orange" />
           <span className="text-[13px] text-brand-medium leading-relaxed">
             I agree to the <button className="font-bold text-brand-orange">Terms</button> and <button className="font-bold text-brand-orange">Privacy Policy</button>
           </span>
-        </motion.label>
+        </label>
 
         {error && <motion.p className="mt-3 text-center text-[13px] font-semibold text-brand-red" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{error}</motion.p>}
 

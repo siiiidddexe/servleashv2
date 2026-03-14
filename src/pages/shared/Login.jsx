@@ -13,13 +13,8 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Regex updated to be more permissive to handle common email patterns without strict TLD checks if necessary, 
-  // but the user's issue "string did not match the expected pattern" suggests the HTML5 validation or a strict regex is failing.
-  // Let's use a standard, robust email regex.
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const isValid = emailRegex.test(email) && password.length >= 6;
-
-
 
   const handleLogin = async () => {
     if (!isValid) return;
@@ -50,7 +45,7 @@ export default function Login() {
           <p className="mt-2 text-[15px] text-brand-medium">Sign in with your email &amp; password</p>
         </motion.div>
 
-        <motion.div className="mt-6 space-y-4" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.4 }}>
+        <div className="mt-6 space-y-4">
           {/* Email */}
           <div>
             <label className="block mb-1.5 text-[13px] font-semibold text-brand-medium">Email</label>
@@ -58,7 +53,7 @@ export default function Login() {
               <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-brand-light"><Mail size={18} /></span>
               <input type="email" inputMode="email" placeholder="you@example.com" value={email}
                 onChange={(e) => setEmail(e.target.value.trim())}
-                className="input-field" style={{ paddingLeft: "2.75rem" }} autoFocus />
+                className="input-field" style={{ paddingLeft: "2.75rem" }} />
             </div>
           </div>
 
@@ -76,7 +71,7 @@ export default function Login() {
               </button>
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {error && <motion.p className="mt-3 text-center text-[13px] font-semibold text-brand-red" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{error}</motion.p>}
 
