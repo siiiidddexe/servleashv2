@@ -44,7 +44,7 @@ body {
   min-height: 100dvh;
   position: relative;
   overflow-x: hidden;
-  background: #f4f4f4;
+  background: #ffffff;
 }
 
 @media (min-width: 431px) and (max-width: 767px) {
@@ -57,8 +57,8 @@ body {
 }
 
 @media (min-width: 1024px) {
-  body { background: #e2e8f0; display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; padding: 2rem 0; }
-  #root { max-width: 430px; border-radius: 2rem; margin-top: 0; box-shadow: 0 12px 80px rgba(15,23,42,0.12); min-height: calc(100vh - 4rem); }
+  body { background: #f1f5f9; display: flex; align-items: flex-start; justify-content: center; min-height: 100vh; padding: 2rem 0; }
+  #root { max-width: 430px; border-radius: 2rem; margin-top: 0; box-shadow: 0 12px 80px rgba(15,23,42,0.08); min-height: calc(100vh - 4rem); overflow-x: visible; }
 }
 
 .no-scrollbar::-webkit-scrollbar { display: none; }

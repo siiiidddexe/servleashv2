@@ -1,5 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 // Shared auth pages (unified — single login for all roles)
 import Login from "./pages/shared/Login";
@@ -63,11 +62,8 @@ function OnboardingGate() {
 }
 
 export default function App() {
-  const location = useLocation();
-
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes>
         {/* ── Root → Onboarding (first visit) or Login (returning) ── */}
         <Route path="/" element={<OnboardingGate />} />
         <Route path="/onboarding" element={<Onboarding />} />
@@ -151,6 +147,5 @@ export default function App() {
         <Route path="/vendor/pets" element={<VendorHome />} />
         <Route path="/vendor/reviews" element={<VendorHome />} />
       </Routes>
-    </AnimatePresence>
   );
 }
