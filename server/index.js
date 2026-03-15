@@ -219,14 +219,28 @@ async function seedDefaults() {
 
 async function initDB() {
   db = new Surreal();
-  const surrealUrl = process.env.SURREALDB_URL || "ws://127.0.0.1:8000";
+  const surrealUrl = process.env.SURREALDB_URL || "ws://127.0.0.1:8000/rpc";
   const surrealUser = process.env.SURREALDB_USER || "root";
   const surrealPass = process.env.SURREALDB_PASS || "root";
-  await db.connect(surrealUrl);
-  await db.signin({ username: surrealUser, password: surrealPass });
-  await db.use({ namespace: "servleash", database: "servleash" });
-  console.log("✅ Connected to SurrealDB");
-  await seedDefaults();
+
+  console.log(`🔌 Connecting to SurrealDB at ${surrealUrl} as ${surrealUser}...`);
+
+  try {
+    await db.connect(surrealUrl);
+    console.log("✅ Connected to socket");
+
+    await db.signin({ username: surrealUser, password: surrealPass });
+    console.log("🔑 Signed in successfully");
+
+    await db.use({ namespace: "servleash", database: "servleash" });
+    console.log("📂 Selected namespace/database");
+
+    await seedDefaults();
+  } catch (err) {
+    console.error("❌ SurrealDB Error:", err);
+    console.error("   Message:", err.message);
+    if (process.env.NODE_ENV === "production") process.exit(1);
+  }
 }
 
 // ── Transient in-memory stores (not persisted) ────────
@@ -344,7 +358,9 @@ app.post("/api/auth/register", async (req, res) => {
 
     if (existing && !existing.password) {
       // User exists via old OTP-only flow — set password now
-      await dbMerge("users", existing.id, {
+      // Note: dbMerge requires full ID including table name
+      const userId = existing.id.includes(":") ? existing.id : `users:${existing.id}`;
+      await dbMerge("users", userId, {
         password: hashPassword(password),
         ...(name ? { name } : {}),
         ...(phone ? { phone } : {}),
@@ -385,12 +401,11 @@ app.post("/api/auth/login", async (req, res) => {
     const user = normalizeRecord(arr?.[0] ?? null);
     if (!user) return res.status(401).json({ error: "Account not found. Please register first." });
 
-    if (!user.password) {
-      // If user has no password (migrated from OTP-only), set it now.
-      // Ideally we should verify via OTP before setting a password, but following current logic:
-      await dbMerge("users", user.id, { password: hashPassword(password) });
-    } else if (!verifyPassword(password, user.password)) {
-      // 🛑 STOP: Incorrect password. Do NOT send OTP.
+    if (!user.password && password) {
+       // If user has no password (migrated), set it now.
+       const userId = user.id.includes(":") ? user.id : `users:${user.id}`;
+       await dbMerge("users", userId, { password: hashPassword(password) });
+    } else if (user.password && !verifyPassword(password, user.password)) {
       return res.status(401).json({ error: "Invalid password" });
     }
 

@@ -19,6 +19,12 @@ export default function Login() {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   const isValid = emailRegex.test(email) && password.length >= 6;
 
+  // Clear any existing token on mount to prevent "The string did not match the expected pattern" error
+  // which can happen if fetch tries to send an invalid Authorization header from a corrupted token.
+  useState(() => {
+    localStorage.removeItem("servleash_token");
+  });
+
   const handleLogin = async () => {
     if (!isValid) return;
     setLoading(true);
