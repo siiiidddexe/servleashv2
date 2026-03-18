@@ -99,6 +99,9 @@ export const api = {
   cancelOrder: (id) => request(`/orders/${id}/cancel`, { method: "PUT" }),
   getReviews: (type, id) => request(`/reviews/${type}/${id}`),
   submitReview: (data) => request("/reviews", { method: "POST", body: JSON.stringify(data) }),
+  getSavedAddresses: () => request("/addresses"),
+  saveAddress: (data) => request("/addresses", { method: "POST", body: JSON.stringify(data) }),
+  deleteAddress: (id) => request(`/addresses/${id}`, { method: "DELETE" }),
 
   // Coins & Referral
   getCoins: () => request("/coins"),

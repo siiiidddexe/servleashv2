@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { CreditCard, Coins, Heart, MapPin, Check, Banknote, Smartphone, ShieldCheck, X, Loader2, Clock, Calendar } from "lucide-react";
+import { CreditCard, Coins, Heart, MapPin, Check, Banknote, Smartphone, ShieldCheck, X, Loader2, Clock, Calendar, BookmarkPlus, Trash2 } from "lucide-react";
 import BackBtn from "../../components/BackBtn";
 import { api } from "../../lib/api";
 
@@ -34,6 +34,11 @@ export default function Checkout() {
   // Structured address
   const [addr, setAddr] = useState({ name: "", phone: "", flat: "", street: "", landmark: "", city: "", pincode: "" });
   const setField = (k, v) => setAddr(prev => ({ ...prev, [k]: v }));
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [selectedSavedId, setSelectedSavedId] = useState(null);
+  const [saveLabel, setSaveLabel] = useState("");
+  const [savingAddr, setSavingAddr] = useState(false);
+  const [addrSaved, setAddrSaved] = useState(false);
 
   // Delivery slot
   const days = getNext5Days();
@@ -49,12 +54,42 @@ export default function Checkout() {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const [cartData, coinData] = await Promise.all([api.getCart(), api.getCoins()]);
+      const [cartData, coinData, addresses] = await Promise.all([api.getCart(), api.getCoins(), api.getSavedAddresses()]);
       setItems(cartData.items || []);
       setCoins(coinData);
+      setSavedAddresses(addresses || []);
     } catch { /* */ }
     setLoading(false);
   }, []);
+
+  const applySavedAddress = (a) => {
+    setAddr({ name: a.name, phone: a.phone, flat: a.flat, street: a.street, landmark: a.landmark, city: a.city, pincode: a.pincode });
+    setSelectedSavedId(a.id);
+    setAddrSaved(false);
+    setSaveLabel("");
+  };
+
+  const handleSaveAddress = async () => {
+    if (!saveLabel.trim()) return;
+    setSavingAddr(true);
+    try {
+      const saved = await api.saveAddress({ label: saveLabel.trim(), ...addr });
+      setSavedAddresses(prev => [saved.address, ...prev]);
+      setSelectedSavedId(saved.address.id);
+      setAddrSaved(true);
+      setSaveLabel("");
+    } catch { /* */ }
+    setSavingAddr(false);
+  };
+
+  const handleDeleteAddress = async (id, e) => {
+    e.stopPropagation();
+    try {
+      await api.deleteAddress(id);
+      setSavedAddresses(prev => prev.filter(a => a.id !== id));
+      if (selectedSavedId === id) setSelectedSavedId(null);
+    } catch { /* */ }
+  };
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -163,24 +198,50 @@ export default function Checkout() {
         {/* Delivery Address */}
         <motion.div className="rounded-2xl bg-white p-4 shadow-soft" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.04 }}>
           <h3 className="text-[15px] font-bold text-brand-dark mb-3 flex items-center gap-2"><MapPin size={15} className="text-brand-orange" /> Delivery Address</h3>
+
+          {/* Saved address chips */}
+          {savedAddresses.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[11px] text-brand-light mb-2">Saved addresses</p>
+              <div className="flex gap-2 flex-wrap">
+                {savedAddresses.map(a => (
+                  <button key={a.id} onClick={() => applySavedAddress(a)}
+                    className={`flex items-center gap-1.5 pl-3 pr-2 py-1.5 rounded-xl border-2 text-[12px] font-semibold transition-all ${
+                      selectedSavedId === a.id
+                        ? "bg-brand-dark border-brand-dark text-white"
+                        : "bg-brand-bg border-transparent text-brand-dark"
+                    }`}>
+                    {a.label}
+                    <span onClick={e => handleDeleteAddress(a.id, e)}
+                      className={`ml-0.5 rounded-md p-0.5 ${selectedSavedId === a.id ? "text-white/60 hover:text-white" : "text-brand-light hover:text-red-400"}`}>
+                      <X size={11} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <div className="h-px bg-brand-bg mt-4 mb-1" />
+            </div>
+          )}
+
+          {/* Form fields */}
           <div className="space-y-2.5">
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <p className="text-[11px] text-brand-light mb-1">Full Name <span className="text-red-400">*</span></p>
-                <input value={addr.name} onChange={e => setField("name", e.target.value)} placeholder="Rahul Sharma" className="input-field w-full" />
+                <input value={addr.name} onChange={e => { setField("name", e.target.value); setSelectedSavedId(null); setAddrSaved(false); }} placeholder="Rahul Sharma" className="input-field w-full" />
               </div>
               <div>
                 <p className="text-[11px] text-brand-light mb-1">Phone <span className="text-red-400">*</span></p>
-                <input value={addr.phone} onChange={e => setField("phone", e.target.value)} placeholder="9876543210" inputMode="numeric" className="input-field w-full" />
+                <input value={addr.phone} onChange={e => { setField("phone", e.target.value); setSelectedSavedId(null); setAddrSaved(false); }} placeholder="9876543210" inputMode="numeric" className="input-field w-full" />
               </div>
             </div>
             <div>
               <p className="text-[11px] text-brand-light mb-1">Flat / House No / Floor / Building <span className="text-red-400">*</span></p>
-              <input value={addr.flat} onChange={e => setField("flat", e.target.value)} placeholder="Flat 4B, 2nd Floor, Sunrise Apartments" className="input-field w-full" />
+              <input value={addr.flat} onChange={e => { setField("flat", e.target.value); setSelectedSavedId(null); setAddrSaved(false); }} placeholder="Flat 4B, 2nd Floor, Sunrise Apartments" className="input-field w-full" />
             </div>
             <div>
               <p className="text-[11px] text-brand-light mb-1">Street / Colony / Area <span className="text-red-400">*</span></p>
-              <input value={addr.street} onChange={e => setField("street", e.target.value)} placeholder="MG Road, Koramangala" className="input-field w-full" />
+              <input value={addr.street} onChange={e => { setField("street", e.target.value); setSelectedSavedId(null); setAddrSaved(false); }} placeholder="MG Road, Koramangala" className="input-field w-full" />
             </div>
             <div>
               <p className="text-[11px] text-brand-light mb-1">Landmark <span className="text-brand-light font-normal">(optional)</span></p>
@@ -189,14 +250,64 @@ export default function Checkout() {
             <div className="grid grid-cols-2 gap-2.5">
               <div>
                 <p className="text-[11px] text-brand-light mb-1">City <span className="text-red-400">*</span></p>
-                <input value={addr.city} onChange={e => setField("city", e.target.value)} placeholder="Bangalore" className="input-field w-full" />
+                <input value={addr.city} onChange={e => { setField("city", e.target.value); setSelectedSavedId(null); setAddrSaved(false); }} placeholder="Bangalore" className="input-field w-full" />
               </div>
               <div>
                 <p className="text-[11px] text-brand-light mb-1">Pincode <span className="text-red-400">*</span></p>
-                <input value={addr.pincode} onChange={e => setField("pincode", e.target.value)} placeholder="560001" inputMode="numeric" maxLength={6} className="input-field w-full" />
+                <input value={addr.pincode} onChange={e => { setField("pincode", e.target.value); setSelectedSavedId(null); setAddrSaved(false); }} placeholder="560001" inputMode="numeric" maxLength={6} className="input-field w-full" />
               </div>
             </div>
           </div>
+
+          {/* Save address prompt — appears when form has required fields, not already saved, not a saved address selected */}
+          <AnimatePresence>
+            {addr.name && addr.flat && addr.city && addr.pincode && !selectedSavedId && (
+              <motion.div
+                className="mt-4 pt-4 border-t border-brand-bg"
+                initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
+              >
+                {addrSaved ? (
+                  <p className="flex items-center gap-1.5 text-[12px] font-semibold text-teal-600">
+                    <Check size={14} /> Address saved!
+                  </p>
+                ) : (
+                  <>
+                    <p className="text-[12px] font-semibold text-brand-dark mb-2 flex items-center gap-1.5">
+                      <BookmarkPlus size={14} className="text-brand-orange" /> Save this address as
+                    </p>
+                    {/* Quick preset chips */}
+                    <div className="flex gap-2 flex-wrap mb-2.5">
+                      {["Home", "Work", "Parents", "Partner"].map(preset => (
+                        <button key={preset} onClick={() => setSaveLabel(preset)}
+                          className={`px-3 py-1.5 rounded-xl text-[12px] font-semibold border transition-all ${
+                            saveLabel === preset
+                              ? "bg-brand-dark text-white border-brand-dark"
+                              : "bg-brand-bg text-brand-medium border-transparent"
+                          }`}>
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        value={saveLabel}
+                        onChange={e => setSaveLabel(e.target.value)}
+                        placeholder="Or type a name…"
+                        className="input-field flex-1 text-[13px]"
+                      />
+                      <button
+                        onClick={handleSaveAddress}
+                        disabled={!saveLabel.trim() || savingAddr}
+                        className="px-4 py-2 rounded-xl bg-brand-dark text-white text-[12px] font-bold disabled:opacity-40 active:opacity-80 shrink-0"
+                      >
+                        {savingAddr ? "…" : "Save"}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
         {/* Delivery Time */}

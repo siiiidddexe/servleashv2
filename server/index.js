@@ -1910,6 +1910,38 @@ app.post("/api/reviews", authenticate, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════
+// SAVED ADDRESSES
+// ═══════════════════════════════════════════════════════
+
+app.get("/api/addresses", authenticate, async (req, res) => {
+  const [records] = await dbQuery(
+    `SELECT * FROM user_addresses WHERE userId = $uid ORDER BY createdAt DESC`,
+    { uid: req.userId }
+  );
+  res.json(normalizeRecords(records || []));
+});
+
+app.post("/api/addresses", authenticate, async (req, res) => {
+  const { label, name, phone, flat, street, landmark, city, pincode } = req.body;
+  if (!label || !flat || !city) return res.status(400).json({ error: "Label, flat and city are required" });
+  const addr = {
+    id: genId("addr"), userId: req.userId, label,
+    name: name || "", phone: phone || "", flat, street: street || "",
+    landmark: landmark || "", city, pincode: pincode || "",
+    createdAt: new Date().toISOString(),
+  };
+  await dbCreate("user_addresses", addr.id, addr);
+  res.json({ success: true, address: addr });
+});
+
+app.delete("/api/addresses/:id", authenticate, async (req, res) => {
+  const addr = await dbGetById("user_addresses", req.params.id);
+  if (!addr || addr.userId !== req.userId) return res.status(404).json({ error: "Not found" });
+  await dbDelete("user_addresses", req.params.id);
+  res.json({ success: true });
+});
+
+// ═══════════════════════════════════════════════════════
 // HEALTH
 // ═══════════════════════════════════════════════════════
 
