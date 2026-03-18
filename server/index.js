@@ -224,8 +224,15 @@ async function seedDefaults() {
   }
 }
 
+function withTimeout(promise, ms) {
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
+
 async function initDB() {
-  const surrealUrl = process.env.SURREALDB_URL || "ws://127.0.0.1:8000";
+  const surrealUrl = process.env.SURREALDB_URL || "http://127.0.0.1:8000";
   const surrealUser = process.env.SURREALDB_USER || "root";
   const surrealPass = process.env.SURREALDB_PASS || "root";
   console.log(`🔌 Connecting to SurrealDB at ${surrealUrl} as ${surrealUser}...`);
@@ -233,9 +240,9 @@ async function initDB() {
   while (retries > 0) {
     try {
       db = new Surreal();
-      await db.connect(surrealUrl);
-      await db.signin({ username: surrealUser, password: surrealPass });
-      await db.use({ namespace: "servleash", database: "servleash" });
+      await withTimeout(db.connect(surrealUrl), 5000);
+      await withTimeout(db.signin({ username: surrealUser, password: surrealPass }), 5000);
+      await withTimeout(db.use({ namespace: "servleash", database: "servleash" }), 5000);
       console.log("✅ Connected to SurrealDB");
       await seedDefaults();
       dbReady = true;

@@ -16,7 +16,7 @@ services:
     depends_on:
       - surrealdb
     environment:
-      - SURREALDB_URL=ws://surrealdb:8000
+      - SURREALDB_URL=http://surrealdb:8000
       - SURREALDB_USER=${SURREALDB_USER:-root}
       - SURREALDB_PASS=${SURREALDB_PASS:-root}
       - MAIL_API_URL=${MAIL_API_URL:-https://nexomail.logiclaunch.in}
