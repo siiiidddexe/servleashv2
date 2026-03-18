@@ -175,7 +175,7 @@ export default function ServiceDetail() {
           <>
             <motion.div className="fixed inset-0 bg-black/40 z-40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowBookSheet(false)} />
             <motion.div
-              className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-y-auto"
+              className="fixed bottom-0 inset-x-0 bg-white rounded-t-3xl z-50 max-h-[80vh] overflow-y-auto"
               initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
             >
