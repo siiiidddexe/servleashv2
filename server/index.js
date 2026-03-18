@@ -242,6 +242,9 @@ async function initDB() {
       db = new Surreal();
       await withTimeout(db.connect(surrealUrl), 5000);
       await withTimeout(db.signin({ username: surrealUser, password: surrealPass }), 5000);
+      // SurrealDB 3.x requires explicit namespace/database creation
+      await withTimeout(db.query("DEFINE NAMESPACE IF NOT EXISTS servleash"), 5000);
+      await withTimeout(db.query("USE NS servleash; DEFINE DATABASE IF NOT EXISTS servleash"), 5000);
       await withTimeout(db.use({ namespace: "servleash", database: "servleash" }), 5000);
       console.log("✅ Connected to SurrealDB");
       await seedDefaults();
