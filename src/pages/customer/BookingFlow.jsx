@@ -266,22 +266,33 @@ export default function BookingFlow() {
               <p className="mt-3 text-[13px] text-brand-light">No slots available for this date.</p>
             ) : (
               <div className="mt-3 grid grid-cols-4 gap-2">
-                {timeSlots.map(({ time, available }) => (
-                  <button
-                    key={time}
-                    onClick={() => available && setSelectedTime(time)}
-                    disabled={!available}
-                    className={`py-2.5 rounded-xl text-[12px] font-semibold transition-all ${
-                      !available
-                        ? "bg-gray-100 text-gray-300 cursor-not-allowed"
-                        : selectedTime === time
+                {timeSlots.map(({ time, available, booked, capacity, past }) => {
+                  const full = booked !== undefined && capacity !== undefined && booked >= capacity;
+                  const isSelected = selectedTime === time;
+                  return (
+                    <button
+                      key={time}
+                      onClick={() => available && setSelectedTime(time)}
+                      disabled={!available}
+                      className={`relative py-2.5 rounded-xl text-[12px] font-semibold transition-all ${
+                        isSelected
                           ? "bg-brand-dark text-white shadow-elevated"
-                          : "bg-gray-50 text-brand-dark active:scale-95"
-                    }`}
-                  >
-                    {time}
-                  </button>
-                ))}
+                          : full
+                            ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                            : past
+                              ? "bg-gray-50 text-gray-300 cursor-not-allowed"
+                              : "bg-gray-50 text-brand-dark active:scale-95"
+                      }`}
+                    >
+                      <span className={full ? "line-through" : ""}>{time}</span>
+                      {full && (
+                        <span className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 rounded-full bg-red-400 flex items-center justify-center">
+                          <span className="text-white text-[7px] font-bold">✕</span>
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>

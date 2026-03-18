@@ -156,11 +156,11 @@ const DEFAULT_SERVICES = [
 ];
 
 const DEFAULT_VENDORS = [
-  { id: "ven_1", name: "Happy Paws Salon", category: "Grooming", rating: 4.8, reviews: 420, distance: "1.2 km", address: "123 Park Street, Koramangala", city: "Bangalore", phone: "+91 98765 43210", image: null, services: ["svc_1", "svc_2"], gallery: [], approved: true, open_time: "09:00", close_time: "18:00", slot_interval: 30 },
-  { id: "ven_2", name: "PetCare Vet Clinic", category: "Vet Visit", rating: 4.9, reviews: 680, distance: "2.5 km", address: "45 MG Road", city: "Bangalore", phone: "+91 98765 43211", image: null, services: ["svc_3", "svc_4", "svc_9"], gallery: [], approved: true, open_time: "08:00", close_time: "20:00", slot_interval: 20 },
-  { id: "ven_3", name: "Pawsome Stays", category: "Boarding", rating: 4.6, reviews: 210, distance: "3.8 km", address: "78 Indiranagar", city: "Bangalore", phone: "+91 98765 43212", image: null, services: ["svc_5"], gallery: [], approved: true, open_time: "09:00", close_time: "17:00", slot_interval: 60 },
-  { id: "ven_4", name: "WoofWalkers", category: "Training", rating: 4.5, reviews: 145, distance: "0.8 km", address: "12 HSR Layout", city: "Bangalore", phone: "+91 98765 43213", image: null, services: ["svc_6", "svc_8"], gallery: [], approved: true, open_time: "07:00", close_time: "19:00", slot_interval: 30 },
-  { id: "ven_5", name: "FreshBowl Pets", category: "Meals", rating: 4.7, reviews: 95, distance: "4.1 km", address: "56 Whitefield", city: "Bangalore", phone: "+91 98765 43214", image: null, services: ["svc_7"], gallery: [], approved: true, open_time: "10:00", close_time: "21:00", slot_interval: 30 },
+  { id: "ven_1", name: "Happy Paws Salon", category: "Grooming", rating: 4.8, reviews: 420, distance: "1.2 km", address: "123 Park Street, Koramangala", city: "Bangalore", phone: "+91 98765 43210", image: null, services: ["svc_1", "svc_2"], gallery: [], approved: true, open_time: "09:00", close_time: "18:00", slot_interval: 30, employee_count: 2 },
+  { id: "ven_2", name: "PetCare Vet Clinic", category: "Vet Visit", rating: 4.9, reviews: 680, distance: "2.5 km", address: "45 MG Road", city: "Bangalore", phone: "+91 98765 43211", image: null, services: ["svc_3", "svc_4", "svc_9"], gallery: [], approved: true, open_time: "08:00", close_time: "20:00", slot_interval: 20, employee_count: 3 },
+  { id: "ven_3", name: "Pawsome Stays", category: "Boarding", rating: 4.6, reviews: 210, distance: "3.8 km", address: "78 Indiranagar", city: "Bangalore", phone: "+91 98765 43212", image: null, services: ["svc_5"], gallery: [], approved: true, open_time: "09:00", close_time: "17:00", slot_interval: 60, employee_count: 1 },
+  { id: "ven_4", name: "WoofWalkers", category: "Training", rating: 4.5, reviews: 145, distance: "0.8 km", address: "12 HSR Layout", city: "Bangalore", phone: "+91 98765 43213", image: null, services: ["svc_6", "svc_8"], gallery: [], approved: true, open_time: "07:00", close_time: "19:00", slot_interval: 30, employee_count: 2 },
+  { id: "ven_5", name: "FreshBowl Pets", category: "Meals", rating: 4.7, reviews: 95, distance: "4.1 km", address: "56 Whitefield", city: "Bangalore", phone: "+91 98765 43214", image: null, services: ["svc_7"], gallery: [], approved: true, open_time: "10:00", close_time: "21:00", slot_interval: 30, employee_count: 1 },
 ];
 
 const DEFAULT_PRODUCTS = [
@@ -206,8 +206,13 @@ async function patchVendorTimings() {
   for (const v of DEFAULT_VENDORS) {
     try {
       const existing = await dbGetById("vendors", v.id);
-      if (existing && !existing.open_time) {
-        await dbMerge("vendors", v.id, { open_time: v.open_time, close_time: v.close_time, slot_interval: v.slot_interval });
+      if (existing) {
+        const patch = {};
+        if (!existing.open_time)     patch.open_time     = v.open_time;
+        if (!existing.close_time)    patch.close_time    = v.close_time;
+        if (!existing.slot_interval) patch.slot_interval = v.slot_interval;
+        if (!existing.employee_count) patch.employee_count = v.employee_count;
+        if (Object.keys(patch).length) await dbMerge("vendors", v.id, patch);
       }
     } catch {}
   }
@@ -694,17 +699,18 @@ app.get("/api/vendors/:id", async (req, res) => {
 });
 
 // GET /api/vendors/:id/slots?date=YYYY-MM-DD
-// Returns all in-store time slots for a vendor on a given date, with availability
+// Returns all in-store time slots for a vendor on a given date.
+// Capacity per slot = employee_count. A slot is full when bookings >= capacity.
 app.get("/api/vendors/:id/slots", async (req, res) => {
   const { date } = req.query;
   if (!date) return res.status(400).json({ error: "date required" });
   const vendor = await dbGetById("vendors", req.params.id);
   if (!vendor) return res.status(404).json({ error: "Vendor not found" });
 
-  const openTime     = vendor.open_time     || "09:00";
-  const closeTime    = vendor.close_time    || "18:00";
-  const intervalMin  = Math.max(10, vendor.slot_interval || 30); // minimum 10-min interval
-  const gapMin       = intervalMin; // enforce one booking per slot + gap
+  const openTime      = vendor.open_time      || "09:00";
+  const closeTime     = vendor.close_time     || "18:00";
+  const intervalMin   = Math.max(10, vendor.slot_interval  || 30);
+  const employeeCount = Math.max(1,  vendor.employee_count || 1);
 
   const [openH,  openM]  = openTime.split(":").map(Number);
   const [closeH, closeM] = closeTime.split(":").map(Number);
@@ -715,32 +721,32 @@ app.get("/api/vendors/:id/slots", async (req, res) => {
   const allSlotMins = [];
   for (let t = openTotal; t < closeTotal; t += intervalMin) allSlotMins.push(t);
 
-  // Existing (non-cancelled) bookings for this vendor on this date
+  // Count existing (non-cancelled) bookings per time slot for this vendor/date
   const [records] = await dbQuery(
     `SELECT time FROM bookings WHERE vendorId = $vid AND date = $date AND status != 'cancelled'`,
     { vid: req.params.id, date }
   );
-  const bookedMins = (records || []).map(b => {
-    const [bh, bm] = (b.time || "").split(":").map(Number);
-    return bh * 60 + (bm || 0);
-  });
+  const bookingsPerSlot = {};
+  for (const b of (records || [])) {
+    const t = (b.time || "").trim();
+    bookingsPerSlot[t] = (bookingsPerSlot[t] || 0) + 1;
+  }
 
-  // A slot is unavailable if any existing booking falls within gapMin of it
-  const now = new Date();
+  const now      = new Date();
   const todayStr = now.toISOString().split("T")[0];
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowMin   = now.getHours() * 60 + now.getMinutes();
 
   const slots = allSlotMins.map(slotMin => {
-    const h = Math.floor(slotMin / 60);
-    const m = slotMin % 60;
+    const h    = Math.floor(slotMin / 60);
+    const m    = slotMin % 60;
     const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
-    const booked = bookedMins.some(bm => Math.abs(slotMin - bm) < gapMin);
-    // For today, also grey out past slots (slots < now)
-    const past = date === todayStr && slotMin <= nowMin;
-    return { time, available: !booked && !past };
+    const booked   = bookingsPerSlot[time] || 0;
+    const past     = date === todayStr && slotMin <= nowMin;
+    const full     = booked >= employeeCount;
+    return { time, available: !past && !full, booked, capacity: employeeCount, past };
   });
 
-  res.json({ slots, open_time: openTime, close_time: closeTime, slot_interval: intervalMin });
+  res.json({ slots, open_time: openTime, close_time: closeTime, slot_interval: intervalMin, employee_count: employeeCount });
 });
 
 // ═══════════════════════════════════════════════════════

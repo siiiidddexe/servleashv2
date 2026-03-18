@@ -7,7 +7,7 @@ import ImageCropper from "../../components/ImageCropper";
 
 function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
   const [form, setForm] = useState(
-    initial || { name: "", category: "Grooming", address: "", city: "", phone: "", image: null, services: [], open_time: "09:00", close_time: "18:00", slot_interval: 30 }
+    initial || { name: "", category: "Grooming", address: "", city: "", phone: "", image: null, services: [], open_time: "09:00", close_time: "18:00", slot_interval: 30, employee_count: 1 }
   );
   const [showCropper, setShowCropper] = useState(false);
   const [preview, setPreview] = useState(initial?.image || null);
@@ -78,7 +78,7 @@ function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
 
         {/* Shop hours & slot config */}
         <div>
-          <p className="text-[12px] font-semibold text-brand-dark mb-2">Shop Hours &amp; Slot Interval</p>
+          <p className="text-[12px] font-semibold text-brand-dark mb-2">Shop Hours &amp; Slot Settings</p>
           <div className="flex gap-2 items-center">
             <div className="flex-1">
               <p className="text-[11px] text-brand-light mb-1">Opens</p>
@@ -94,7 +94,17 @@ function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
                 {[10, 15, 20, 30, 45, 60].map(v => <option key={v} value={v}>{v} min</option>)}
               </select>
             </div>
+            <div className="flex-1">
+              <p className="text-[11px] text-brand-light mb-1">Employees</p>
+              <input
+                type="number" min={1} max={50}
+                value={form.employee_count || 1}
+                onChange={e => set("employee_count", Math.max(1, Number(e.target.value)))}
+                className="input-field w-full"
+              />
+            </div>
           </div>
+          <p className="text-[10px] text-brand-light mt-1">Employees = parallel bookings per slot. 2 employees → 2 customers at 10:00.</p>
         </div>
 
         {/* assign services */}
