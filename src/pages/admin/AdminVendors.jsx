@@ -7,7 +7,7 @@ import ImageCropper from "../../components/ImageCropper";
 
 function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
   const [form, setForm] = useState(
-    initial || { name: "", category: "Grooming", address: "", city: "", phone: "", image: null, services: [] }
+    initial || { name: "", category: "Grooming", address: "", city: "", phone: "", image: null, services: [], open_time: "09:00", close_time: "18:00", slot_interval: 30 }
   );
   const [showCropper, setShowCropper] = useState(false);
   const [preview, setPreview] = useState(initial?.image || null);
@@ -74,6 +74,27 @@ function VendorForm({ initial, onSave, onCancel, saving, allServices }) {
         <div className="flex gap-2">
           <input value={form.city} onChange={e => set("city", e.target.value)} placeholder="City" className="input-field flex-1" />
           <input value={form.phone} onChange={e => set("phone", e.target.value)} placeholder="Phone" className="input-field flex-1" />
+        </div>
+
+        {/* Shop hours & slot config */}
+        <div>
+          <p className="text-[12px] font-semibold text-brand-dark mb-2">Shop Hours &amp; Slot Interval</p>
+          <div className="flex gap-2 items-center">
+            <div className="flex-1">
+              <p className="text-[11px] text-brand-light mb-1">Opens</p>
+              <input type="time" value={form.open_time || "09:00"} onChange={e => set("open_time", e.target.value)} className="input-field w-full" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] text-brand-light mb-1">Closes</p>
+              <input type="time" value={form.close_time || "18:00"} onChange={e => set("close_time", e.target.value)} className="input-field w-full" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[11px] text-brand-light mb-1">Slot (min)</p>
+              <select value={form.slot_interval || 30} onChange={e => set("slot_interval", Number(e.target.value))} className="input-field w-full">
+                {[10, 15, 20, 30, 45, 60].map(v => <option key={v} value={v}>{v} min</option>)}
+              </select>
+            </div>
+          </div>
         </div>
 
         {/* assign services */}

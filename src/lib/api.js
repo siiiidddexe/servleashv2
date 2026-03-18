@@ -61,6 +61,7 @@ export const api = {
   // Vendors
   getVendors: (category) => request(`/vendors${category && category !== "All" ? `?category=${encodeURIComponent(category)}` : ""}`),
   getVendor: (id) => request(`/vendors/${id}`),
+  getVendorSlots: (vendorId, date) => request(`/vendors/${vendorId}/slots?date=${date}`),
 
   // Products
   getProducts: (category) => request(`/products${category && category !== "All" ? `?category=${encodeURIComponent(category)}` : ""}`),

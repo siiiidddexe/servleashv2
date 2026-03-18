@@ -4,13 +4,25 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Calendar, Clock, PawPrint, FileText, CheckCircle, CreditCard, Banknote, Shield } from "lucide-react";
 import { api } from "../../lib/api";
 
-// Generate time slots dynamically from service operating hours or default 9AM–5PM
-function generateTimeSlots(startHour = 9, endHour = 17, intervalMin = 30) {
+// Home delivery slots: 07:30–22:30, 30-min intervals
+// For today, only show slots >= now + 3 hours
+function generateHomeDeliverySlots(date) {
   const slots = [];
-  for (let h = startHour; h < endHour; h++) {
-    for (let m = 0; m < 60; m += intervalMin) {
-      if (h === 12 && m >= 0 && h < 14) continue; // skip lunch 12:00-12:30
-      slots.push(`${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
+  const now = new Date();
+  const minTime = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+  const todayStr = now.toISOString().split("T")[0];
+  const isToday = date === todayStr;
+  for (let h = 7; h <= 22; h++) {
+    const mStart = h === 7 ? 30 : 0;
+    for (let m = mStart; m < 60; m += 30) {
+      if (h === 22 && m > 30) break; // last slot 22:30
+      const time = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+      let available = true;
+      if (isToday) {
+        const slotDt = new Date(`${date}T${time}:00`);
+        available = slotDt >= minTime;
+      }
+      slots.push({ time, available });
     }
   }
   return slots;
@@ -54,11 +66,12 @@ export default function BookingFlow() {
   const [step, setStep] = useState(1); // 1=select slot, 2=confirm, 3=done
   const [booking, setBooking] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [timeSlots, setTimeSlots] = useState([]); // [{ time, available }]
 
   const days = getNext7Days();
-  const timeSlots = generateTimeSlots();
 
   useEffect(() => {
     (async () => {
@@ -74,6 +87,27 @@ export default function BookingFlow() {
       setLoading(false);
     })();
   }, [serviceId, vendorId]);
+
+  // Reload time slots whenever date or mode changes
+  useEffect(() => {
+    if (!selectedDate) return;
+    setSelectedTime("");
+    if (mode === "home_delivery") {
+      setTimeSlots(generateHomeDeliverySlots(selectedDate));
+    } else if (vendorId) {
+      setLoadingSlots(true);
+      api.getVendorSlots(vendorId, selectedDate)
+        .then(data => setTimeSlots(data.slots || []))
+        .catch(() => setTimeSlots([]))
+        .finally(() => setLoadingSlots(false));
+    } else {
+      // in_store without specific vendor — generic 9AM-6PM slots
+      setTimeSlots(generateHomeDeliverySlots(selectedDate).filter(s => {
+        const [h] = s.time.split(":").map(Number);
+        return h >= 9 && h < 18;
+      }));
+    }
+  }, [selectedDate, mode, vendorId]);
 
   const price = mode === "home_delivery" && svc?.homePrice ? svc.homePrice : svc?.price || 0;
 
@@ -180,10 +214,11 @@ export default function BookingFlow() {
 
       {/* Service card */}
       <div className="mx-5 mt-4 rounded-2xl bg-gray-50 p-4 flex gap-3">
-        <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden">
-          <img src={getImageSrc(svc?.image) || ""} alt={svc?.name}
-            className="h-full w-full object-cover"
-            onError={(e) => { e.target.style.display = 'none'; }} />
+        <div className="h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-teal-50 flex items-center justify-center">
+          {svc?.image
+            ? <img src={getImageSrc(svc.image)} alt={svc?.name} className="h-full w-full object-cover" />
+            : <span className="text-[22px]">🐾</span>
+          }
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="text-[14px] font-bold text-brand-dark truncate">{svc?.name}</h3>
@@ -223,19 +258,32 @@ export default function BookingFlow() {
           <div className="px-5 mt-5">
             <h3 className="text-[14px] font-bold text-brand-dark flex items-center gap-2">
               <Clock size={15} className="text-brand-orange" /> Select Time
+              {mode === "home_delivery" && <span className="text-[10px] text-brand-light font-normal ml-1">(min. 3 hrs from now)</span>}
             </h3>
-            <div className="mt-3 grid grid-cols-4 gap-2">
-              {timeSlots.map((t) => (
-                <button key={t} onClick={() => setSelectedTime(t)}
-                  className={`py-2.5 rounded-xl text-[12px] font-semibold transition-all ${
-                    selectedTime === t
-                      ? "bg-brand-dark text-white shadow-elevated"
-                      : "bg-gray-50 text-brand-dark"
-                  }`}>
-                  {t}
-                </button>
-              ))}
-            </div>
+            {loadingSlots ? (
+              <div className="mt-4 flex justify-center"><span className="spinner" /></div>
+            ) : timeSlots.length === 0 ? (
+              <p className="mt-3 text-[13px] text-brand-light">No slots available for this date.</p>
+            ) : (
+              <div className="mt-3 grid grid-cols-4 gap-2">
+                {timeSlots.map(({ time, available }) => (
+                  <button
+                    key={time}
+                    onClick={() => available && setSelectedTime(time)}
+                    disabled={!available}
+                    className={`py-2.5 rounded-xl text-[12px] font-semibold transition-all ${
+                      !available
+                        ? "bg-gray-100 text-gray-300 cursor-not-allowed"
+                        : selectedTime === time
+                          ? "bg-brand-dark text-white shadow-elevated"
+                          : "bg-gray-50 text-brand-dark active:scale-95"
+                    }`}
+                  >
+                    {time}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pet selection */}
