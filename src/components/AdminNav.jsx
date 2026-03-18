@@ -20,7 +20,7 @@ export default function AdminNav() {
   const nav = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-brand-border-light shadow-bottom-bar z-50">
+    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-brand-border-light shadow-bottom-bar z-30">
       <div className="flex items-center overflow-x-auto no-scrollbar py-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {tabs.map((t) => {
           const Icon = t.icon;

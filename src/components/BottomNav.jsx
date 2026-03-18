@@ -103,7 +103,7 @@ export default function BottomNav({ base = "/customer", activeTab = "default" })
   const tabs = TAB_SETS[activeTab] || TAB_SETS.default;
 
   return (
-    <nav className="fixed bottom-0 left-1/2 z-50 w-full max-w-[430px] -translate-x-1/2 bg-white border-t border-gray-100 shadow-bottom-bar">
+    <nav className="fixed bottom-0 left-1/2 z-30 w-full max-w-[430px] -translate-x-1/2 bg-white border-t border-gray-100 shadow-bottom-bar">
       <div className="flex h-[60px] items-center justify-around px-2">
         {tabs.map((t) => {
           const full = base + t.path;
