@@ -6,7 +6,7 @@ services:
     user: root
     command: start --bind 0.0.0.0:8000 --user ${SURREALDB_USER:-root} --pass ${SURREALDB_PASS:-root} surrealkv:///data/db
     volumes:
-      - surrealdb_data:/data/db
+      - surrealdb_data_v2:/data/db
 
   backend:
     build:
@@ -38,7 +38,7 @@ services:
       - dokploy-network
 
 volumes:
-  surrealdb_data:
+  surrealdb_data_v2:
   uploads_data:
 
 networks:
