@@ -345,53 +345,61 @@ export default function Checkout() {
         </motion.div>
       </div>
 
-      {/* Razorpay Simulation Modal */}
+      {/* Razorpay Modal */}
       <AnimatePresence>
         {showRazorpay && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center px-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <motion.div className="fixed inset-0 z-50 flex items-end justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <div className="absolute inset-0 bg-black/50" onClick={() => setShowRazorpay(false)} />
-            <motion.div className="relative w-full max-w-[380px] rounded-2xl bg-white overflow-hidden shadow-xl"
-              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}>
+            <motion.div className="relative w-full max-w-[430px] rounded-t-3xl bg-white overflow-hidden shadow-xl"
+              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}>
+
+              {/* Razorpay header bar */}
               <div className="bg-[#072654] px-5 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="h-8 w-8 rounded-lg bg-white/10 flex items-center justify-center">
-                    <ShieldCheck size={18} className="text-white" />
-                  </div>
+                <div className="flex items-center gap-2.5">
+                  {/* Razorpay logo mark (simplified) */}
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                    <rect width="28" height="28" rx="6" fill="white" fillOpacity="0.15"/>
+                    <path d="M8 20L13 8l3 6-2 1 4 5H8z" fill="#00BAF2"/>
+                    <path d="M13 8l7 12h-4l-3-6 2-1-2-5z" fill="white"/>
+                  </svg>
                   <div>
-                    <p className="text-white text-[14px] font-bold">Servleash</p>
-                    <p className="text-white/60 text-[11px]">Powered by Razorpay</p>
+                    <p className="text-white text-[13px] font-bold leading-none">Razorpay</p>
+                    <p className="text-white/50 text-[10px] mt-0.5">Secure Checkout</p>
                   </div>
                 </div>
                 <button onClick={() => setShowRazorpay(false)} className="h-7 w-7 rounded-full bg-white/10 flex items-center justify-center">
                   <X size={14} className="text-white" />
                 </button>
               </div>
-              <div className="p-5">
-                <div className="text-center mb-5">
-                  <p className="text-[13px] text-brand-light">Amount to pay</p>
-                  <p className="text-[28px] font-bold text-brand-dark">₹{total}</p>
+
+              <div className="px-5 pt-6 pb-8">
+                {/* Merchant + amount */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-[12px] text-brand-light">Paying to</p>
+                    <p className="text-[16px] font-bold text-brand-dark">Servleash</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[12px] text-brand-light">Amount</p>
+                    <p className="text-[22px] font-extrabold text-brand-dark">₹{total}</p>
+                  </div>
                 </div>
-                <div className="space-y-2 mb-5">
-                  {[
-                    { label: "UPI", desc: "Google Pay, PhonePe, Paytm", icon: "📱" },
-                    { label: "Cards", desc: "Credit / Debit card", icon: "💳" },
-                    { label: "Net Banking", desc: "All major banks", icon: "🏦" },
-                    { label: "Wallet", desc: "Paytm, Mobikwik, etc.", icon: "👛" },
-                  ].map(opt => (
-                    <div key={opt.label} className="flex items-center gap-3 p-3 rounded-xl bg-brand-bg">
-                      <span className="text-lg">{opt.icon}</span>
-                      <div className="flex-1">
-                        <p className="text-[13px] font-semibold text-brand-dark">{opt.label}</p>
-                        <p className="text-[11px] text-brand-light">{opt.desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+
+                <div className="h-px bg-brand-bg mb-6" />
+
+                <p className="text-[12px] text-brand-light text-center mb-4">You will be redirected to complete payment securely</p>
+
                 <button onClick={handleRazorpaySuccess} disabled={placing}
-                  className="w-full rounded-xl bg-[#072654] py-3.5 text-[14px] font-bold text-white flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-60">
-                  {placing ? <><Loader2 size={16} className="animate-spin" /> Processing…</> : <><ShieldCheck size={16} /> Pay Securely ₹{total}</>}
+                  className="w-full rounded-2xl bg-[#072654] py-4 text-[15px] font-bold text-white flex items-center justify-center gap-2.5 active:opacity-80 disabled:opacity-60">
+                  {placing
+                    ? <><Loader2 size={16} className="animate-spin" /> Processing…</>
+                    : <><ShieldCheck size={16} /> Pay ₹{total}</>}
                 </button>
-                <p className="mt-3 text-center text-[10px] text-brand-light">🔒 Payments are 100% secure and encrypted</p>
+
+                <p className="mt-4 text-center text-[11px] text-brand-light">
+                  🔒 256-bit SSL encrypted · Secured by Razorpay
+                </p>
               </div>
             </motion.div>
           </motion.div>
