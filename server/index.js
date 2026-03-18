@@ -1327,7 +1327,7 @@ app.get("/api/orders", authenticate, async (req, res) => {
 });
 
 app.post("/api/orders", authenticate, async (req, res) => {
-  const { address, coinsUsed, charityAmount, paymentMethod } = req.body;
+  const { address, deliveryDate, deliverySlot, coinsUsed, charityAmount, paymentMethod } = req.body;
   const cart = await dbGetById("carts", req.userId);
   const cartItems = cart?.items || [];
   if (!cartItems.length) return res.status(400).json({ error: "Cart is empty" });
@@ -1346,7 +1346,8 @@ app.post("/api/orders", authenticate, async (req, res) => {
 
   const order = {
     id: genId("ord"), userId: req.userId, items, subtotal, coinDiscount, charityAmount: charity,
-    total, address: address || "", paymentMethod: paymentMethod || "razorpay", status: "confirmed", created_at: new Date().toISOString(),
+    total, address: address || "", deliveryDate: deliveryDate || "", deliverySlot: deliverySlot || "",
+    paymentMethod: paymentMethod || "razorpay", status: "confirmed", created_at: new Date().toISOString(),
   };
   await dbCreate("orders", order.id, order);
   await dbPut("carts", req.userId, { items: [] });
