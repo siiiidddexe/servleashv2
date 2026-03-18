@@ -15,7 +15,6 @@ export default function ServiceDetail() {
   const [loading, setLoading] = useState(true);
   const [showBookSheet, setShowBookSheet] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const [selectedMode, setSelectedMode] = useState("in_store");
 
   useEffect(() => {
     (async () => {
@@ -37,26 +36,29 @@ export default function ServiceDetail() {
     } catch {}
   };
 
-  const handleBook = () => {
-    if (selectedMode === "home_delivery" || vendors.length === 0) {
-      // Rapido model: no vendor pre-selection for home delivery
-      nav(`/customer/book?serviceId=${svc.id}&mode=${selectedMode}`);
+  // Home delivery: skip vendor selection, system assigns whoever is available
+  const handleBookHome = () => {
+    nav(`/customer/book?serviceId=${svc.id}&mode=home_delivery`);
+  };
+
+  // In-store: if multiple vendors, show picker sheet; if one, go straight to booking
+  const handleBookInStore = () => {
+    if (vendors.length === 0) {
+      nav(`/customer/book?serviceId=${svc.id}&mode=in_store`);
       return;
     }
     if (vendors.length === 1) {
-      setSelectedVendor(vendors[0]);
-      setShowBookSheet(true);
-    } else if (vendors.length > 1) {
-      setShowBookSheet(true);
+      nav(`/customer/book?serviceId=${svc.id}&vendorId=${vendors[0].id}&mode=in_store`);
+      return;
     }
+    setSelectedVendor(null);
+    setShowBookSheet(true);
   };
 
   const confirmBook = () => {
     if (!selectedVendor) return;
-    nav(`/customer/book?serviceId=${svc.id}&vendorId=${selectedVendor.id}&mode=${selectedMode}`);
+    nav(`/customer/book?serviceId=${svc.id}&vendorId=${selectedVendor.id}&mode=in_store`);
   };
-
-  const price = selectedMode === "home_delivery" && svc?.homePrice ? svc.homePrice : svc?.price || 0;
 
   if (loading) return (
     <div className="min-h-[100dvh] bg-white flex items-center justify-center">
@@ -164,9 +166,30 @@ export default function ServiceDetail() {
 
       {/* Fixed bottom CTA */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-gray-100 px-5 py-4 z-20">
-        <button onClick={handleBook} className="btn-primary w-full flex items-center justify-center gap-2">
-          Book Now — ₹{svc.price}
-        </button>
+        {svc.homePrice ? (
+          <div className="flex gap-3">
+            <button onClick={handleBookHome}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 rounded-2xl bg-teal-50 border-2 border-teal-400 py-3 active:opacity-80">
+              <div className="flex items-center gap-1.5">
+                <Truck size={14} className="text-teal-600" />
+                <span className="text-[13px] font-bold text-teal-700">Home Visit</span>
+              </div>
+              <span className="text-[16px] font-extrabold text-teal-700">₹{svc.homePrice}</span>
+            </button>
+            <button onClick={handleBookInStore}
+              className="flex-1 flex flex-col items-center justify-center gap-0.5 rounded-2xl bg-brand-dark py-3 active:opacity-80">
+              <div className="flex items-center gap-1.5">
+                <Store size={14} className="text-white" />
+                <span className="text-[13px] font-bold text-white">At Salon</span>
+              </div>
+              <span className="text-[16px] font-extrabold text-white">₹{svc.price}</span>
+            </button>
+          </div>
+        ) : (
+          <button onClick={handleBookInStore} className="btn-primary w-full flex items-center justify-center gap-2">
+            <Store size={15} /> Book at Salon — ₹{svc.price}
+          </button>
+        )}
       </div>
 
       {/* ── Book bottom sheet ── */}
@@ -180,81 +203,50 @@ export default function ServiceDetail() {
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
             >
               <div className="px-5 pt-4 pb-2 flex items-center justify-between sticky top-0 bg-white z-10">
-                <h3 className="text-[17px] font-extrabold text-brand-dark">Book {svc.name}</h3>
+                <div>
+                  <h3 className="text-[17px] font-extrabold text-brand-dark">Choose a Store</h3>
+                  <p className="text-[12px] text-gray-400 mt-0.5">Pick where you'd like to visit</p>
+                </div>
                 <button onClick={() => setShowBookSheet(false)} className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
                   <X size={16} className="text-gray-500" />
                 </button>
               </div>
 
               {/* Vendor selection */}
-              {vendors.length > 1 && (
-                <div className="px-5 mt-2">
-                  <p className="text-[13px] font-bold text-gray-500 mb-2">Choose a vendor</p>
-                  <div className="space-y-2">
-                    {vendors.map((v) => (
-                      <button key={v.id} onClick={() => setSelectedVendor(v)}
-                        className={`w-full flex items-center gap-3 rounded-2xl p-3.5 transition-all border-2 ${
-                          selectedVendor?.id === v.id ? "bg-teal-50 border-teal-400" : "bg-gray-50 border-transparent"
-                        }`}>
-                        <div className="h-10 w-10 shrink-0 rounded-xl overflow-hidden">
-                          <img src={v.image || PLACEHOLDER} alt={v.name} className="h-full w-full object-cover" />
-                        </div>
-                        <div className="flex-1 text-left min-w-0">
-                          <h4 className="text-[13px] font-bold text-brand-dark truncate">{v.name}</h4>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <Star size={10} className="text-yellow-400 fill-yellow-400" />
-                            <span className="text-[11px] text-gray-500">{v.rating} · {v.distance}</span>
-                          </div>
-                        </div>
-                        {selectedVendor?.id === v.id && <CheckCircle size={18} className="text-teal-500 shrink-0" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Mode selection */}
-              <div className="px-5 mt-4">
-                <p className="text-[13px] font-bold text-gray-500 mb-2">Service mode</p>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button onClick={() => setSelectedMode("in_store")}
-                    className={`flex flex-col items-center gap-2 rounded-2xl p-4 transition-all border-2 ${
-                      selectedMode === "in_store" ? "bg-blue-50 border-blue-400" : "bg-gray-50 border-transparent"
-                    }`}>
-                    <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                      selectedMode === "in_store" ? "bg-blue-500" : "bg-gray-200"
-                    }`}>
-                      <Store size={18} className={selectedMode === "in_store" ? "text-white" : "text-gray-500"} />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[13px] font-bold text-brand-dark">At Salon</p>
-                      <p className="text-[18px] font-extrabold text-brand-dark mt-0.5">₹{svc.price}</p>
-                    </div>
-                  </button>
-                  {svc.homePrice && (
-                    <button onClick={() => setSelectedMode("home_delivery")}
-                      className={`flex flex-col items-center gap-2 rounded-2xl p-4 transition-all border-2 ${
-                        selectedMode === "home_delivery" ? "bg-teal-50 border-teal-400" : "bg-gray-50 border-transparent"
+              <div className="px-5 mt-2 pb-2">
+                <div className="space-y-2">
+                  {vendors.map((v) => (
+                    <button key={v.id} onClick={() => setSelectedVendor(v)}
+                      className={`w-full flex items-center gap-3 rounded-2xl p-3.5 transition-all border-2 ${
+                        selectedVendor?.id === v.id ? "bg-teal-50 border-teal-400" : "bg-gray-50 border-transparent"
                       }`}>
-                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${
-                        selectedMode === "home_delivery" ? "bg-teal-500" : "bg-gray-200"
-                      }`}>
-                        <Truck size={18} className={selectedMode === "home_delivery" ? "text-white" : "text-gray-500"} />
+                      <div className="h-12 w-12 shrink-0 rounded-xl overflow-hidden bg-white">
+                        <img src={v.image || PLACEHOLDER} alt={v.name} className="h-full w-full object-cover" />
                       </div>
-                      <div className="text-center">
-                        <p className="text-[13px] font-bold text-brand-dark">Home Visit</p>
-                        <p className="text-[18px] font-extrabold text-brand-dark mt-0.5">₹{svc.homePrice}</p>
+                      <div className="flex-1 text-left min-w-0">
+                        <h4 className="text-[14px] font-bold text-brand-dark truncate">{v.name}</h4>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Star size={11} className="text-yellow-400 fill-yellow-400" />
+                          <span className="text-[12px] text-gray-500 font-semibold">{v.rating}</span>
+                          <span className="text-gray-300">·</span>
+                          <MapPin size={11} className="text-gray-400" />
+                          <span className="text-[12px] text-gray-400">{v.city || v.address}</span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-[15px] font-extrabold text-brand-dark">₹{svc.price}</p>
+                        {selectedVendor?.id === v.id && <CheckCircle size={16} className="text-teal-500 ml-auto mt-1" />}
                       </div>
                     </button>
-                  )}
+                  ))}
                 </div>
               </div>
 
               {/* Confirm */}
-              <div className="px-5 pt-5 pb-8">
+              <div className="px-5 pt-3 pb-8">
                 <button onClick={confirmBook} disabled={!selectedVendor}
                   className="btn-primary w-full flex items-center justify-center gap-2">
-                  Continue — ₹{price}
+                  Book at {selectedVendor?.name || "Selected Store"} — ₹{svc.price}
                 </button>
               </div>
             </motion.div>
