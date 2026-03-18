@@ -6,6 +6,12 @@ services:
     command: start --bind 0.0.0.0:8000 --user ${SURREALDB_USER:-root} --pass ${SURREALDB_PASS:-root} surrealkv:///data/db
     volumes:
       - surrealdb_data:/data/db
+    healthcheck:
+      test: ["CMD", "surreal", "is-ready", "--endpoint", "http://127.0.0.1:8000"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
 
   backend:
     build:
@@ -13,7 +19,8 @@ services:
       dockerfile: Dockerfile
     restart: always
     depends_on:
-      - surrealdb
+      surrealdb:
+        condition: service_healthy
     environment:
       - SURREALDB_URL=ws://surrealdb:8000
       - SURREALDB_USER=${SURREALDB_USER:-root}

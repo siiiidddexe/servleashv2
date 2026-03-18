@@ -218,29 +218,27 @@ async function seedDefaults() {
 }
 
 async function initDB() {
-  db = new Surreal();
-  const surrealUrl = process.env.SURREALDB_URL || "ws://127.0.0.1:8000/rpc";
+  const surrealUrl = process.env.SURREALDB_URL || "ws://127.0.0.1:8000";
   const surrealUser = process.env.SURREALDB_USER || "root";
   const surrealPass = process.env.SURREALDB_PASS || "root";
-
   console.log(`🔌 Connecting to SurrealDB at ${surrealUrl} as ${surrealUser}...`);
-
-  try {
-    await db.connect(surrealUrl);
-    console.log("✅ Connected to socket");
-
-    await db.signin({ username: surrealUser, password: surrealPass });
-    console.log("🔑 Signed in successfully");
-
-    await db.use({ namespace: "servleash", database: "servleash" });
-    console.log("📂 Selected namespace/database");
-
-    await seedDefaults();
-  } catch (err) {
-    console.error("❌ SurrealDB Error:", err);
-    console.error("   Message:", err.message);
-    if (process.env.NODE_ENV === "production") process.exit(1);
+  let retries = 15;
+  while (retries > 0) {
+    try {
+      db = new Surreal();
+      await db.connect(surrealUrl);
+      await db.signin({ username: surrealUser, password: surrealPass });
+      await db.use({ namespace: "servleash", database: "servleash" });
+      console.log("✅ Connected to SurrealDB");
+      await seedDefaults();
+      return;
+    } catch (err) {
+      retries--;
+      console.log(`⏳ SurrealDB not ready, retrying in 3s... (${retries} attempts left) [${err.message}]`);
+      await new Promise((r) => setTimeout(r, 3000));
+    }
   }
+  throw new Error("❌ Failed to connect to SurrealDB after multiple attempts");
 }
 
 // ── Transient in-memory stores (not persisted) ────────
