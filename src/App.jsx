@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
+import { useAuth } from "./context/AuthContext";
 
 // Shared auth pages (unified — single login for all roles)
 import Login from "./pages/shared/Login";
@@ -57,7 +58,30 @@ import VendorBookings from "./pages/vendor/VendorBookings";
 import VendorEarnings from "./pages/vendor/VendorEarnings";
 import VendorProfile from "./pages/vendor/VendorProfile";
 
+const ROLE_HOME = {
+  customer: "/customer/home",
+  vendor:   "/vendor/home",
+  admin:    "/admin/home",
+};
+
+// Redirect unauthenticated users to /login; wrong-role users to their actual home
+function ProtectedRoute({ role, children }) {
+  const { user, token } = useAuth();
+  if (!user || !token) return <Navigate to="/login" replace />;
+  if (role && user.role !== role) return <Navigate to={ROLE_HOME[user.role] ?? "/login"} replace />;
+  return children;
+}
+
+// Redirect already-authenticated users away from auth pages (login, signup, etc.)
+function AuthRoute({ children }) {
+  const { user, token } = useAuth();
+  if (user && token) return <Navigate to={ROLE_HOME[user.role] ?? "/login"} replace />;
+  return children;
+}
+
 function OnboardingGate() {
+  const { user, token } = useAuth();
+  if (user && token) return <Navigate to={ROLE_HOME[user.role] ?? "/login"} replace />;
   const seen = localStorage.getItem("servleash_onboarded");
   return seen ? <Login /> : <Navigate to="/onboarding" replace />;
 }
@@ -73,71 +97,71 @@ export default function App() {
         <Route path="/onboarding" element={<Onboarding />} />
 
         {/* ── Unified auth (single login page for all roles) ── */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/otp" element={<OtpVerify />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/login"           element={<AuthRoute><Login /></AuthRoute>} />
+        <Route path="/signup"          element={<AuthRoute><Signup /></AuthRoute>} />
+        <Route path="/otp"             element={<AuthRoute><OtpVerify /></AuthRoute>} />
+        <Route path="/forgot-password" element={<AuthRoute><ForgotPassword /></AuthRoute>} />
+        <Route path="/reset-password"  element={<AuthRoute><ResetPassword /></AuthRoute>} />
 
         {/* ── Legacy role-prefixed auth routes (redirect compat) ── */}
-        <Route path="/customer/login" element={<Login />} />
-        <Route path="/admin/login" element={<Login />} />
-        <Route path="/vendor/login" element={<Login />} />
+        <Route path="/customer/login" element={<AuthRoute><Login /></AuthRoute>} />
+        <Route path="/admin/login"    element={<AuthRoute><Login /></AuthRoute>} />
+        <Route path="/vendor/login"   element={<AuthRoute><Login /></AuthRoute>} />
 
         {/* ── Customer flow ── */}
-        <Route path="/customer" element={<CustomerSplash />} />
-        <Route path="/customer/home" element={<CustomerHome />} />
-        <Route path="/customer/pet/:id" element={<PetDetail />} />
-        <Route path="/customer/pets" element={<CustomerHome />} />
-        <Route path="/customer/profile" element={<CustomerProfile />} />
-        <Route path="/customer/appointments" element={<CustomerAppointments />} />
-        <Route path="/customer/shop" element={<CustomerShop />} />
-        <Route path="/customer/saved" element={<CustomerSaved />} />
-        <Route path="/customer/service/:id" element={<ServiceDetail />} />
-        <Route path="/customer/vendor/:id" element={<VendorDetail />} />
-        <Route path="/customer/book" element={<BookingFlow />} />
-        <Route path="/customer/my-pets" element={<MyPets />} />
-        <Route path="/customer/pet-docs/:petId" element={<PetDocs />} />
-        <Route path="/customer/pet-qr/:petId" element={<PetQR />} />
-        <Route path="/customer/petogram" element={<PetOGram />} />
-        <Route path="/customer/emergency-vet" element={<EmergencyVet />} />
-        <Route path="/customer/lost-found" element={<LostPetRecovery />} />
-        <Route path="/customer/ai-chat" element={<AIChat />} />
-        <Route path="/customer/cart" element={<Cart />} />
-        <Route path="/customer/checkout" element={<Checkout />} />
-        <Route path="/customer/orders" element={<Orders />} />
-        <Route path="/customer/coins" element={<CoinsPage />} />
-        <Route path="/customer/celebrations" element={<Celebrations />} />
-        <Route path="/customer/charity" element={<Charity />} />
-        <Route path="/customer/breeders" element={<Breeders />} />
+        <Route path="/customer"                 element={<ProtectedRoute role="customer"><CustomerSplash /></ProtectedRoute>} />
+        <Route path="/customer/home"            element={<ProtectedRoute role="customer"><CustomerHome /></ProtectedRoute>} />
+        <Route path="/customer/pet/:id"         element={<ProtectedRoute role="customer"><PetDetail /></ProtectedRoute>} />
+        <Route path="/customer/pets"            element={<ProtectedRoute role="customer"><CustomerHome /></ProtectedRoute>} />
+        <Route path="/customer/profile"         element={<ProtectedRoute role="customer"><CustomerProfile /></ProtectedRoute>} />
+        <Route path="/customer/appointments"    element={<ProtectedRoute role="customer"><CustomerAppointments /></ProtectedRoute>} />
+        <Route path="/customer/shop"            element={<ProtectedRoute role="customer"><CustomerShop /></ProtectedRoute>} />
+        <Route path="/customer/saved"           element={<ProtectedRoute role="customer"><CustomerSaved /></ProtectedRoute>} />
+        <Route path="/customer/service/:id"     element={<ProtectedRoute role="customer"><ServiceDetail /></ProtectedRoute>} />
+        <Route path="/customer/vendor/:id"      element={<ProtectedRoute role="customer"><VendorDetail /></ProtectedRoute>} />
+        <Route path="/customer/book"            element={<ProtectedRoute role="customer"><BookingFlow /></ProtectedRoute>} />
+        <Route path="/customer/my-pets"         element={<ProtectedRoute role="customer"><MyPets /></ProtectedRoute>} />
+        <Route path="/customer/pet-docs/:petId" element={<ProtectedRoute role="customer"><PetDocs /></ProtectedRoute>} />
+        <Route path="/customer/pet-qr/:petId"   element={<ProtectedRoute role="customer"><PetQR /></ProtectedRoute>} />
+        <Route path="/customer/petogram"        element={<ProtectedRoute role="customer"><PetOGram /></ProtectedRoute>} />
+        <Route path="/customer/emergency-vet"   element={<ProtectedRoute role="customer"><EmergencyVet /></ProtectedRoute>} />
+        <Route path="/customer/lost-found"      element={<ProtectedRoute role="customer"><LostPetRecovery /></ProtectedRoute>} />
+        <Route path="/customer/ai-chat"         element={<ProtectedRoute role="customer"><AIChat /></ProtectedRoute>} />
+        <Route path="/customer/cart"            element={<ProtectedRoute role="customer"><Cart /></ProtectedRoute>} />
+        <Route path="/customer/checkout"        element={<ProtectedRoute role="customer"><Checkout /></ProtectedRoute>} />
+        <Route path="/customer/orders"          element={<ProtectedRoute role="customer"><Orders /></ProtectedRoute>} />
+        <Route path="/customer/coins"           element={<ProtectedRoute role="customer"><CoinsPage /></ProtectedRoute>} />
+        <Route path="/customer/celebrations"    element={<ProtectedRoute role="customer"><Celebrations /></ProtectedRoute>} />
+        <Route path="/customer/charity"         element={<ProtectedRoute role="customer"><Charity /></ProtectedRoute>} />
+        <Route path="/customer/breeders"        element={<ProtectedRoute role="customer"><Breeders /></ProtectedRoute>} />
 
         {/* ── Public QR pet profile ── */}
         <Route path="/pet-qr/:petId" element={<PetQR />} />
 
         {/* ── Admin flow ── */}
-        <Route path="/admin" element={<AdminSplash />} />
-        <Route path="/admin/home" element={<AdminHome />} />
-        <Route path="/admin/services" element={<AdminServices />} />
-        <Route path="/admin/vendors" element={<AdminVendors />} />
-        <Route path="/admin/users" element={<AdminUsers />} />
-        <Route path="/admin/profile" element={<AdminProfile />} />
-        <Route path="/admin/bookings" element={<AdminBookings />} />
-        <Route path="/admin/promo" element={<AdminPromo />} />
-        <Route path="/admin/products" element={<AdminProducts />} />
-        <Route path="/admin/charity" element={<AdminCharity />} />
-        <Route path="/admin/recovery" element={<AdminRecovery />} />
-        <Route path="/admin/celebrations" element={<AdminCelebrations />} />
-        <Route path="/admin/emergency-vets" element={<AdminEmergencyVets />} />
+        <Route path="/admin"                element={<ProtectedRoute role="admin"><AdminSplash /></ProtectedRoute>} />
+        <Route path="/admin/home"           element={<ProtectedRoute role="admin"><AdminHome /></ProtectedRoute>} />
+        <Route path="/admin/services"       element={<ProtectedRoute role="admin"><AdminServices /></ProtectedRoute>} />
+        <Route path="/admin/vendors"        element={<ProtectedRoute role="admin"><AdminVendors /></ProtectedRoute>} />
+        <Route path="/admin/users"          element={<ProtectedRoute role="admin"><AdminUsers /></ProtectedRoute>} />
+        <Route path="/admin/profile"        element={<ProtectedRoute role="admin"><AdminProfile /></ProtectedRoute>} />
+        <Route path="/admin/bookings"       element={<ProtectedRoute role="admin"><AdminBookings /></ProtectedRoute>} />
+        <Route path="/admin/promo"          element={<ProtectedRoute role="admin"><AdminPromo /></ProtectedRoute>} />
+        <Route path="/admin/products"       element={<ProtectedRoute role="admin"><AdminProducts /></ProtectedRoute>} />
+        <Route path="/admin/charity"        element={<ProtectedRoute role="admin"><AdminCharity /></ProtectedRoute>} />
+        <Route path="/admin/recovery"       element={<ProtectedRoute role="admin"><AdminRecovery /></ProtectedRoute>} />
+        <Route path="/admin/celebrations"   element={<ProtectedRoute role="admin"><AdminCelebrations /></ProtectedRoute>} />
+        <Route path="/admin/emergency-vets" element={<ProtectedRoute role="admin"><AdminEmergencyVets /></ProtectedRoute>} />
 
         {/* ── Vendor flow ── */}
-        <Route path="/vendor" element={<VendorSplash />} />
-        <Route path="/vendor/home" element={<VendorHome />} />
-        <Route path="/vendor/bookings" element={<VendorBookings />} />
-        <Route path="/vendor/earnings" element={<VendorEarnings />} />
-        <Route path="/vendor/profile" element={<VendorProfile />} />
-        <Route path="/vendor/appointments" element={<VendorBookings />} />
-        <Route path="/vendor/pets" element={<VendorHome />} />
-        <Route path="/vendor/reviews" element={<VendorHome />} />
+        <Route path="/vendor"              element={<ProtectedRoute role="vendor"><VendorSplash /></ProtectedRoute>} />
+        <Route path="/vendor/home"         element={<ProtectedRoute role="vendor"><VendorHome /></ProtectedRoute>} />
+        <Route path="/vendor/bookings"     element={<ProtectedRoute role="vendor"><VendorBookings /></ProtectedRoute>} />
+        <Route path="/vendor/earnings"     element={<ProtectedRoute role="vendor"><VendorEarnings /></ProtectedRoute>} />
+        <Route path="/vendor/profile"      element={<ProtectedRoute role="vendor"><VendorProfile /></ProtectedRoute>} />
+        <Route path="/vendor/appointments" element={<ProtectedRoute role="vendor"><VendorBookings /></ProtectedRoute>} />
+        <Route path="/vendor/pets"         element={<ProtectedRoute role="vendor"><VendorHome /></ProtectedRoute>} />
+        <Route path="/vendor/reviews"      element={<ProtectedRoute role="vendor"><VendorHome /></ProtectedRoute>} />
       </Routes>
     </AnimatePresence>
   );

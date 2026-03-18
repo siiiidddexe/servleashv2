@@ -2,20 +2,11 @@ import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthCtx = createContext(null);
 
-const USER_KEY   = "servleash_user";
-const TOKEN_KEY  = "servleash_token";
-const EXPIRY_KEY = "servleash_expiry";
-const TTL_MS     = 30 * 24 * 60 * 60 * 1000; // 30 days
+const USER_KEY  = "servleash_user";
+const TOKEN_KEY = "servleash_token";
 
 function loadPersistedAuth() {
   try {
-    const expiry = localStorage.getItem(EXPIRY_KEY);
-    if (expiry && Date.now() > parseInt(expiry, 10)) {
-      localStorage.removeItem(USER_KEY);
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(EXPIRY_KEY);
-      return { user: null, token: null };
-    }
     const stored = localStorage.getItem(USER_KEY);
     const token  = localStorage.getItem(TOKEN_KEY);
     return {
@@ -32,16 +23,14 @@ export function AuthProvider({ children }) {
   const [user,  setUser]  = useState(initial.user);
   const [token, setToken] = useState(initial.token);
 
-  // Persist whenever auth changes — sliding 30-day expiry
+  // Persist whenever auth changes — session lasts until explicit logout
   useEffect(() => {
     if (user && token) {
-      localStorage.setItem(USER_KEY,   JSON.stringify(user));
-      localStorage.setItem(TOKEN_KEY,  token);
-      localStorage.setItem(EXPIRY_KEY, String(Date.now() + TTL_MS));
+      localStorage.setItem(USER_KEY,  JSON.stringify(user));
+      localStorage.setItem(TOKEN_KEY, token);
     } else {
       localStorage.removeItem(USER_KEY);
       localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(EXPIRY_KEY);
     }
   }, [user, token]);
 
