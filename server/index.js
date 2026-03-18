@@ -1922,12 +1922,13 @@ app.get("/api/addresses", authenticate, async (req, res) => {
 });
 
 app.post("/api/addresses", authenticate, async (req, res) => {
-  const { label, name, phone, flat, street, landmark, city, pincode } = req.body;
-  if (!label || !flat || !city) return res.status(400).json({ error: "Label, flat and city are required" });
+  const { label, name, phone, flat, street, landmark, city, pincode, lat, lng } = req.body;
+  if (!label || !city) return res.status(400).json({ error: "Label and city are required" });
   const addr = {
     id: genId("addr"), userId: req.userId, label,
-    name: name || "", phone: phone || "", flat, street: street || "",
+    name: name || "", phone: phone || "", flat: flat || "", street: street || "",
     landmark: landmark || "", city, pincode: pincode || "",
+    lat: lat || null, lng: lng || null,
     createdAt: new Date().toISOString(),
   };
   await dbCreate("user_addresses", addr.id, addr);

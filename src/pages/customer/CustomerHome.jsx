@@ -7,7 +7,8 @@ import {
   Search, Bell, MapPin, Scissors, Stethoscope, ShoppingBag, Dog,
   UtensilsCrossed, Dumbbell, Star, ChevronRight, Clock, Truck,
   Store, ShoppingCart, PawPrint, Play, Pause, ChevronDown, ChevronLeft,
-  Video, Heart, Sparkles, X, Check,
+  Video, Heart, Sparkles, X, Check, LocateFixed, Plus, ArrowLeft,
+  Home, Briefcase, Users, HeartHandshake,
 } from "lucide-react";
 import BottomNav from "../../components/BottomNav";
 
@@ -47,6 +48,14 @@ export default function CustomerHome() {
   const [selectedCity, setSelectedCity] = useState(user?.city || "");
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [toast, setToast] = useState(null);
+  // Location picker state
+  const [pickerView, setPickerView] = useState("main"); // "main" | "add"
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [deliveryLabel, setDeliveryLabel] = useState(() => localStorage.getItem("servleash_delivery_label") || "");
+  const [gpsLoading, setGpsLoading] = useState(false);
+  const [gpsError, setGpsError] = useState("");
+  const [addForm, setAddForm] = useState({ label: "Home", customLabel: "", name: "", flat: "", street: "", landmark: "", city: "", pincode: "", lat: null, lng: null });
+  const [savingAddr, setSavingAddr] = useState(false);
 
   // SSE notification listener for booking accepted events (fetch-based for auth headers)
   useEffect(() => {
@@ -105,8 +114,20 @@ export default function CustomerHome() {
     return () => clearTimeout(t);
   }, [searchQ]);
 
-  const handleCitySelect = useCallback(async (city) => {
+  // Load saved addresses when picker opens
+  useEffect(() => {
+    if (showLocationPicker) {
+      api.getSavedAddresses().then(setSavedAddresses).catch(() => {});
+      setPickerView("main");
+      setGpsError("");
+    }
+  }, [showLocationPicker]);
+
+  const handleCitySelect = useCallback(async (city, label = "", lat = null, lng = null) => {
     setSelectedCity(city);
+    const lbl = label || city;
+    setDeliveryLabel(lbl);
+    localStorage.setItem("servleash_delivery_label", lbl);
     setShowLocationPicker(false);
     try {
       const res = await api.updateProfile({ city });
@@ -116,6 +137,56 @@ export default function CustomerHome() {
       }
     } catch {}
   }, [login]);
+
+  const handleGpsLocate = useCallback(async () => {
+    if (!navigator.geolocation) { setGpsError("GPS not supported on this device"); return; }
+    setGpsLoading(true);
+    setGpsError("");
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        try {
+          const resp = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`,
+            { headers: { "Accept-Language": "en" } }
+          );
+          const geo = await resp.json();
+          const a = geo.address || {};
+          const city = a.city || a.town || a.village || a.county || "";
+          const street = [a.road, a.suburb, a.neighbourhood].filter(Boolean).join(", ");
+          const pincode = a.postcode || "";
+          setAddForm(f => ({ ...f, flat: "", street, city, pincode, lat, lng }));
+          setPickerView("add");
+        } catch {
+          setGpsError("Could not fetch address. Please enter manually.");
+        }
+        setGpsLoading(false);
+      },
+      (err) => {
+        setGpsError(err.code === 1 ? "Location permission denied. Please allow access in your browser settings." : "Could not get location. Try again.");
+        setGpsLoading(false);
+      },
+      { timeout: 10000 }
+    );
+  }, []);
+
+  const handleSaveNewAddress = useCallback(async () => {
+    const { label, customLabel, name, flat, street, city, pincode, lat, lng } = addForm;
+    const finalLabel = label === "Custom" ? customLabel.trim() : label;
+    if (!finalLabel || !city) return;
+    setSavingAddr(true);
+    try {
+      const res = await api.saveAddress({ label: finalLabel, name, flat, street, landmark: addForm.landmark, city, pincode, lat, lng });
+      setSavedAddresses(prev => [res.address, ...prev]);
+      // Auto-select the newly saved address
+      handleCitySelect(city, finalLabel, lat, lng);
+      setAddForm({ label: "Home", customLabel: "", name: "", flat: "", street: "", landmark: "", city: "", pincode: "", lat: null, lng: null });
+      setPickerView("main");
+    } catch (e) {
+      setGpsError(e.message || "Could not save address");
+    }
+    setSavingAddr(false);
+  }, [addForm, handleCitySelect]);
 
   const filteredServices = services.filter(s => {
     if (activeTab === "ecommerce" || activeTab === "my_pets") return false;
@@ -131,7 +202,7 @@ export default function CustomerHome() {
   const greetHour = new Date().getHours();
   const greeting = greetHour < 12 ? "Good morning" : greetHour < 17 ? "Good afternoon" : "Good evening";
   const firstName = (user?.name || "User").split(" ")[0];
-  const displayCity = user?.city || selectedCity || "";
+  const displayCity = deliveryLabel || user?.city || selectedCity || "";
 
   return (
     <div className="min-h-[100dvh] bg-[#f4f4f4] pb-24">
@@ -309,44 +380,215 @@ export default function CustomerHome() {
           >
             <div className="absolute inset-0 bg-black/40" onClick={() => displayCity && setShowLocationPicker(false)} />
             <motion.div
-              className="relative w-full max-w-[430px] bg-white rounded-t-3xl p-6 pb-10"
+              className="relative w-full max-w-[430px] bg-white rounded-t-3xl overflow-hidden"
+              style={{ maxHeight: "88vh" }}
               initial={{ y: 300 }} animate={{ y: 0 }} exit={{ y: 300 }}
               transition={{ type: "spring", damping: 25 }}
             >
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <h3 className="text-[18px] font-extrabold text-brand-dark">Select your city</h3>
-                  <p className="text-[13px] text-brand-light mt-0.5">We'll show services near you</p>
-                </div>
-                {displayCity && (
-                  <button onClick={() => setShowLocationPicker(false)}
-                    className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <X size={16} className="text-brand-medium" />
-                  </button>
+              <AnimatePresence mode="wait">
+                {pickerView === "main" ? (
+                  <motion.div key="main" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="flex flex-col" style={{ maxHeight: "88vh" }}>
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
+                      <div>
+                        <h3 className="text-[18px] font-extrabold text-brand-dark">Delivering to</h3>
+                        <p className="text-[13px] text-brand-light mt-0.5">Pick a saved address or choose your city</p>
+                      </div>
+                      {displayCity && (
+                        <button onClick={() => setShowLocationPicker(false)}
+                          className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center">
+                          <X size={16} className="text-brand-medium" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="overflow-y-auto flex-1 px-6 pb-10">
+                      {/* Saved addresses */}
+                      {savedAddresses.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-[11px] font-bold text-brand-light uppercase tracking-wider mb-2">Saved Addresses</p>
+                          <div className="space-y-2">
+                            {savedAddresses.map(addr => {
+                              const addrLabel = addr.label || "";
+                              const isActive = deliveryLabel === addrLabel && (user?.city || selectedCity) === addr.city;
+                              const LabelIcon = addrLabel === "Home" ? Home : addrLabel === "Work" ? Briefcase : addrLabel === "Parents" ? Users : addrLabel === "Partner" ? HeartHandshake : MapPin;
+                              return (
+                                <button key={addr.id}
+                                  onClick={() => handleCitySelect(addr.city, addrLabel, addr.lat, addr.lng)}
+                                  className={`w-full flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition-all border-2 ${
+                                    isActive ? "bg-teal-50 border-brand-orange" : "bg-gray-50 border-transparent"
+                                  }`}>
+                                  <div className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${isActive ? "bg-brand-orange/10" : "bg-white"}`}>
+                                    <LabelIcon size={16} className={isActive ? "text-brand-orange" : "text-brand-medium"} />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-[13px] font-bold ${isActive ? "text-brand-orange" : "text-brand-dark"}`}>{addrLabel}</p>
+                                    <p className="text-[11px] text-brand-light truncate">
+                                      {[addr.flat, addr.street, addr.city].filter(Boolean).join(", ")}
+                                    </p>
+                                  </div>
+                                  {isActive && <Check size={16} className="text-brand-orange shrink-0" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* GPS + Add address buttons */}
+                      <div className="flex gap-2.5 mb-5">
+                        <button
+                          onClick={handleGpsLocate}
+                          disabled={gpsLoading}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-brand-orange/10 py-3.5 text-[13px] font-bold text-brand-orange active:opacity-70 disabled:opacity-60"
+                        >
+                          {gpsLoading
+                            ? <><span className="spinner !border-brand-orange !border-t-transparent !h-4 !w-4" /> Locating…</>
+                            : <><LocateFixed size={15} /> Use my location</>}
+                        </button>
+                        <button
+                          onClick={() => { setPickerView("add"); setGpsError(""); }}
+                          className="flex-1 flex items-center justify-center gap-2 rounded-2xl bg-gray-100 py-3.5 text-[13px] font-bold text-brand-dark active:opacity-70"
+                        >
+                          <Plus size={15} /> Add address
+                        </button>
+                      </div>
+
+                      {gpsError && (
+                        <p className="text-[12px] text-red-500 mb-4 bg-red-50 rounded-xl px-3 py-2">{gpsError}</p>
+                      )}
+
+                      {/* Divider */}
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="flex-1 h-px bg-gray-100" />
+                        <p className="text-[11px] text-brand-light font-semibold">Or select a city</p>
+                        <div className="flex-1 h-px bg-gray-100" />
+                      </div>
+
+                      {/* City grid */}
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {CITIES.map(city => {
+                          const isSelected = !deliveryLabel && (user?.city || selectedCity) === city;
+                          return (
+                            <button key={city} onClick={() => handleCitySelect(city)}
+                              className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-left transition-all border-2 ${
+                                isSelected ? "bg-teal-50 border-brand-orange" : "bg-gray-50 border-transparent"
+                              }`}>
+                              <MapPin size={14} className={isSelected ? "text-brand-orange" : "text-brand-light"} />
+                              <span className={`text-[13px] font-semibold ${isSelected ? "text-brand-orange" : "text-brand-dark"}`}>{city}</span>
+                              {isSelected && <Check size={13} className="text-brand-orange ml-auto" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div key="add" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}
+                    className="flex flex-col" style={{ maxHeight: "88vh" }}>
+                    {/* Header */}
+                    <div className="flex items-center gap-3 px-6 pt-6 pb-4 shrink-0">
+                      <button onClick={() => { setPickerView("main"); setGpsError(""); setAddForm({ label: "Home", customLabel: "", name: "", flat: "", street: "", landmark: "", city: "", pincode: "", lat: null, lng: null }); }}
+                        className="h-8 w-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+                        <ArrowLeft size={16} className="text-brand-medium" />
+                      </button>
+                      <div>
+                        <h3 className="text-[17px] font-extrabold text-brand-dark">Add delivery address</h3>
+                        <p className="text-[12px] text-brand-light mt-0.5">This will be saved for quick checkout</p>
+                      </div>
+                    </div>
+
+                    <div className="overflow-y-auto flex-1 px-6 pb-10">
+                      {/* GPS autofill */}
+                      <button onClick={handleGpsLocate} disabled={gpsLoading}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-teal-50 border border-teal-200 py-3 mb-5 text-[13px] font-bold text-teal-700 active:opacity-70 disabled:opacity-60">
+                        {gpsLoading
+                          ? <><span className="spinner !border-teal-600 !border-t-transparent !h-4 !w-4" /> Getting location…</>
+                          : <><LocateFixed size={14} /> Autofill with GPS</>}
+                      </button>
+
+                      {gpsError && (
+                        <p className="text-[12px] text-red-500 mb-4 bg-red-50 rounded-xl px-3 py-2">{gpsError}</p>
+                      )}
+
+                      {/* Label chips */}
+                      <p className="text-[12px] font-bold text-brand-dark mb-2">Save as</p>
+                      <div className="flex gap-2 flex-wrap mb-4">
+                        {[
+                          { key: "Home", icon: Home },
+                          { key: "Work", icon: Briefcase },
+                          { key: "Parents", icon: Users },
+                          { key: "Partner", icon: HeartHandshake },
+                          { key: "Custom", icon: Plus },
+                        ].map(({ key, icon: Icon }) => (
+                          <button key={key}
+                            onClick={() => setAddForm(f => ({ ...f, label: key }))}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all ${
+                              addForm.label === key ? "bg-brand-orange text-white border-brand-orange" : "bg-gray-100 text-brand-medium border-transparent"
+                            }`}>
+                            <Icon size={11} /> {key}
+                          </button>
+                        ))}
+                      </div>
+                      {addForm.label === "Custom" && (
+                        <input
+                          value={addForm.customLabel}
+                          onChange={e => setAddForm(f => ({ ...f, customLabel: e.target.value }))}
+                          placeholder="e.g. Gym, Hotel…"
+                          className="w-full rounded-xl bg-gray-50 px-4 py-3 text-[13px] text-brand-dark outline-none border border-transparent focus:border-brand-orange mb-4"
+                        />
+                      )}
+
+                      {/* Form fields */}
+                      {[
+                        { field: "name", label: "Full Name", placeholder: "Your name", type: "text" },
+                        { field: "flat", label: "Flat / House No.", placeholder: "e.g. 12B, 3rd floor", type: "text" },
+                        { field: "street", label: "Street / Area", placeholder: "e.g. MG Road, Koramangala", type: "text" },
+                        { field: "landmark", label: "Landmark (optional)", placeholder: "e.g. Near Metro station", type: "text" },
+                      ].map(({ field, label, placeholder, type }) => (
+                        <div key={field} className="mb-3">
+                          <p className="text-[11px] font-bold text-brand-light uppercase tracking-wider mb-1">{label}</p>
+                          <input
+                            type={type}
+                            value={addForm[field]}
+                            onChange={e => setAddForm(f => ({ ...f, [field]: e.target.value }))}
+                            placeholder={placeholder}
+                            className="w-full rounded-xl bg-gray-50 px-4 py-3 text-[13px] text-brand-dark outline-none border border-transparent focus:border-brand-orange"
+                          />
+                        </div>
+                      ))}
+                      <div className="flex gap-2.5 mb-3">
+                        <div className="flex-1">
+                          <p className="text-[11px] font-bold text-brand-light uppercase tracking-wider mb-1">City</p>
+                          <input value={addForm.city} onChange={e => setAddForm(f => ({ ...f, city: e.target.value }))}
+                            placeholder="City" className="w-full rounded-xl bg-gray-50 px-4 py-3 text-[13px] text-brand-dark outline-none border border-transparent focus:border-brand-orange" />
+                        </div>
+                        <div className="w-[120px]">
+                          <p className="text-[11px] font-bold text-brand-light uppercase tracking-wider mb-1">Pincode</p>
+                          <input value={addForm.pincode} onChange={e => setAddForm(f => ({ ...f, pincode: e.target.value }))}
+                            placeholder="560001" inputMode="numeric" maxLength={6}
+                            className="w-full rounded-xl bg-gray-50 px-4 py-3 text-[13px] text-brand-dark outline-none border border-transparent focus:border-brand-orange" />
+                        </div>
+                      </div>
+                      {addForm.lat && (
+                        <div className="flex items-center gap-2 mb-4 rounded-xl bg-teal-50 px-3 py-2.5">
+                          <LocateFixed size={13} className="text-teal-600 shrink-0" />
+                          <p className="text-[11px] text-teal-700 font-medium">GPS: {addForm.lat.toFixed(4)}, {addForm.lng.toFixed(4)}</p>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleSaveNewAddress}
+                        disabled={savingAddr || !(addForm.label === "Custom" ? addForm.customLabel.trim() : addForm.label) || !addForm.city}
+                        className="w-full rounded-2xl bg-brand-orange text-white text-[14px] font-bold py-4 flex items-center justify-center gap-2 active:opacity-80 disabled:opacity-50 mt-2"
+                      >
+                        {savingAddr ? <><span className="spinner !border-white !border-t-transparent" /> Saving…</> : "Save & Deliver Here"}
+                      </button>
+                    </div>
+                  </motion.div>
                 )}
-              </div>
-              <div className="grid grid-cols-2 gap-2.5 max-h-[50vh] overflow-y-auto">
-                {CITIES.map(city => {
-                  const isSelected = (user?.city || selectedCity) === city;
-                  return (
-                    <button
-                      key={city}
-                      onClick={() => handleCitySelect(city)}
-                      className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-left transition-all ${
-                        isSelected
-                          ? "bg-teal-50 border-2 border-brand-orange"
-                          : "bg-gray-50 border-2 border-transparent hover:border-gray-200"
-                      }`}
-                    >
-                      <MapPin size={14} className={isSelected ? "text-brand-orange" : "text-brand-light"} />
-                      <span className={`text-[13px] font-semibold ${isSelected ? "text-brand-orange" : "text-brand-dark"}`}>
-                        {city}
-                      </span>
-                      {isSelected && <Check size={14} className="text-brand-orange ml-auto" />}
-                    </button>
-                  );
-                })}
-              </div>
+              </AnimatePresence>
             </motion.div>
           </motion.div>
         )}

@@ -102,6 +102,7 @@ export const api = {
   getSavedAddresses: () => request("/addresses"),
   saveAddress: (data) => request("/addresses", { method: "POST", body: JSON.stringify(data) }),
   deleteAddress: (id) => request(`/addresses/${id}`, { method: "DELETE" }),
+  updateAddress: (id, data) => request(`/addresses/${id}`, { method: "PUT", body: JSON.stringify(data) }),
 
   // Coins & Referral
   getCoins: () => request("/coins"),
