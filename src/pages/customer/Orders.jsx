@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, Clock, CheckCircle, Truck, X, AlertTriangle, Coins } from "lucide-react";
+import { Package, Clock, CheckCircle, Truck, X, AlertTriangle, Coins, Star } from "lucide-react";
+import ReviewSheet from "../../components/ReviewSheet";
 import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
@@ -20,9 +21,10 @@ const canCancel = (status) => status === "confirmed" || status === "processing" 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [confirmId, setConfirmId] = useState(null); // order id pending cancel confirm
+  const [confirmId, setConfirmId] = useState(null);
   const [cancelling, setCancelling] = useState(null);
-  const [refundToast, setRefundToast] = useState(null); // { coins }
+  const [refundToast, setRefundToast] = useState(null);
+  const [reviewTarget, setReviewTarget] = useState(null); // { id, name, type }
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -118,12 +120,22 @@ export default function Orders() {
                       <span className="text-[12px] text-brand-light italic">
                         {order.coinDiscount > 0 ? `₹${order.coinDiscount} coins refunded` : "Refund in 3–5 days"}
                       </span>
+                    ) : order.status === "delivered" ? (
+                      <button
+                        onClick={() => {
+                          const first = order.items?.[0];
+                          if (first) setReviewTarget({ id: first.productId, name: first.name, type: "product" });
+                        }}
+                        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-yellow-50 text-[12px] font-bold text-yellow-600 active:opacity-70"
+                      >
+                        <Star size={12} /> Rate Order
+                      </button>
                     ) : cancelable ? (
                       <button
                         onClick={() => setConfirmId(order.id)}
                         className="px-4 py-2 rounded-xl bg-red-50 text-red-500 text-[12px] font-bold active:opacity-70"
                       >
-                        Cancel Order
+                        Cancel
                       </button>
                     ) : null}
                   </div>
@@ -172,6 +184,19 @@ export default function Orders() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Review sheet */}
+      <AnimatePresence>
+        {reviewTarget && (
+          <ReviewSheet
+            targetId={reviewTarget.id}
+            targetType={reviewTarget.type}
+            targetName={reviewTarget.name}
+            onClose={() => setReviewTarget(null)}
+            onSuccess={() => setReviewTarget(null)}
+          />
         )}
       </AnimatePresence>
 

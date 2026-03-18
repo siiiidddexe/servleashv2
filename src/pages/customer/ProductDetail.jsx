@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ArrowLeft, Heart, Star, ShoppingCart, Plus, Minus, Check, Package } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ArrowLeft, Heart, Star, ShoppingCart, Plus, Minus, Check, Package, MessageSquare } from "lucide-react";
 import { api } from "../../lib/api";
+import ReviewSheet from "../../components/ReviewSheet";
 
 const PLACEHOLDER = "https://cdn.dribbble.com/userupload/3848536/file/original-4f623bccd6f252547abb165cb87a86ae.jpeg?resize=2048x1572&vertical=center";
 const getImageSrc = (img) => {
@@ -20,6 +21,12 @@ export default function ProductDetail() {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [reviews, setReviews] = useState([]);
+  const [showReview, setShowReview] = useState(false);
+
+  const loadReviews = async () => {
+    try { const r = await api.getReviews("product", id); setReviews(r); } catch {}
+  };
 
   useEffect(() => {
     (async () => {
@@ -30,6 +37,7 @@ export default function ProductDetail() {
       } catch {}
       setLoading(false);
     })();
+    loadReviews();
   }, [id]);
 
   const toggleSave = async () => {
@@ -136,6 +144,34 @@ export default function ProductDetail() {
           </span>
         </div>
 
+        {/* Reviews */}
+        <div className="mt-7">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[15px] font-extrabold text-brand-dark">Reviews ({reviews.length})</h3>
+            <button onClick={() => setShowReview(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-brand-bg text-[12px] font-semibold text-brand-dark active:opacity-70">
+              <MessageSquare size={13} /> Write a Review
+            </button>
+          </div>
+          {reviews.length === 0 ? (
+            <p className="text-[13px] text-brand-light py-3">No reviews yet. Be the first to review!</p>
+          ) : (
+            <div className="space-y-3">
+              {reviews.slice(0, 5).map(r => (
+                <div key={r.id} className="rounded-xl bg-gray-50 p-3.5">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[13px] font-bold text-brand-dark">{r.userName}</span>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= r.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"} />)}
+                    </div>
+                  </div>
+                  {r.comment && <p className="text-[12px] text-gray-500 leading-relaxed">{r.comment}</p>}
+                  <p className="text-[10px] text-brand-light mt-1.5">{new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
         {/* Qty selector */}
         <div className="mt-6 flex items-center gap-4">
           <span className="text-[14px] font-bold text-brand-dark">Quantity</span>
@@ -150,6 +186,19 @@ export default function ProductDetail() {
           </div>
         </div>
       </motion.div>
+
+      {/* Review sheet */}
+      <AnimatePresence>
+        {showReview && (
+          <ReviewSheet
+            targetId={id}
+            targetType="product"
+            targetName={product.name}
+            onClose={() => setShowReview(false)}
+            onSuccess={() => { setShowReview(false); loadReviews(); }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Bottom CTA */}
       <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-5 py-4 z-20">

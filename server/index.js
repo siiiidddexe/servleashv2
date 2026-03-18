@@ -1857,6 +1857,59 @@ app.delete("/api/admin/emergency-vets/:id", authenticate, async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════
+// REVIEWS
+// ═══════════════════════════════════════════════════════
+
+app.get("/api/reviews/:type/:id", async (req, res) => {
+  const { type, id } = req.params;
+  const [records] = await dbQuery(
+    `SELECT * FROM reviews WHERE targetType = $type AND targetId = $id ORDER BY createdAt DESC`,
+    { type, id }
+  );
+  res.json(normalizeRecords(records || []));
+});
+
+app.post("/api/reviews", authenticate, async (req, res) => {
+  const { targetId, targetType, rating, comment } = req.body;
+  if (!targetId || !targetType || !rating || rating < 1 || rating > 5)
+    return res.status(400).json({ error: "Invalid review data" });
+
+  const user = await dbGetById("users", req.userId);
+
+  // One review per user per target — update if already exists
+  const [existing] = await dbQuery(
+    `SELECT * FROM reviews WHERE userId = $uid AND targetId = $tid LIMIT 1`,
+    { uid: req.userId, tid: targetId }
+  );
+  const reviewData = {
+    userId: req.userId, userName: user?.name || "User",
+    targetId, targetType, rating: Number(rating),
+    comment: comment || "", createdAt: new Date().toISOString(),
+  };
+  if (existing?.[0]) {
+    await dbMerge("reviews", normalizeRecord(existing[0]).id, reviewData);
+  } else {
+    await dbCreate("reviews", genId("rev"), reviewData);
+  }
+
+  // Recalculate avg rating + count and push back to target
+  const [allReviews] = await dbQuery(
+    `SELECT rating FROM reviews WHERE targetId = $tid`, { tid: targetId }
+  );
+  const avgRating = allReviews?.length
+    ? Math.round((allReviews.reduce((s, r) => s + r.rating, 0) / allReviews.length) * 10) / 10
+    : Number(rating);
+  const reviewCount = allReviews?.length || 1;
+
+  const tableMap = { product: "products", vendor: "vendors", service: "services" };
+  if (tableMap[targetType]) {
+    await dbMerge(tableMap[targetType], targetId, { rating: avgRating, reviews: reviewCount });
+  }
+
+  res.json({ success: true, rating: avgRating, reviews: reviewCount });
+});
+
+// ═══════════════════════════════════════════════════════
 // HEALTH
 // ═══════════════════════════════════════════════════════
 

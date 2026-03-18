@@ -97,6 +97,8 @@ export const api = {
   getOrders: () => request("/orders"),
   createOrder: (data) => request("/orders", { method: "POST", body: JSON.stringify(data) }),
   cancelOrder: (id) => request(`/orders/${id}/cancel`, { method: "PUT" }),
+  getReviews: (type, id) => request(`/reviews/${type}/${id}`),
+  submitReview: (data) => request("/reviews", { method: "POST", body: JSON.stringify(data) }),
 
   // Coins & Referral
   getCoins: () => request("/coins"),

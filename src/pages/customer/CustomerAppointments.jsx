@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, X, MapPin, Scissors, AlertTriangle, CheckCircle } from "lucide-react";
+import { Calendar, Clock, X, MapPin, Scissors, AlertTriangle, CheckCircle, Star } from "lucide-react";
+import ReviewSheet from "../../components/ReviewSheet";
 import BackBtn from "../../components/BackBtn";
 import BottomNav from "../../components/BottomNav";
 import { api } from "../../lib/api";
@@ -15,8 +16,9 @@ export default function CustomerAppointments() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(null);
-  const [cancelConfirm, setCancelConfirm] = useState(null); // booking to confirm cancel
+  const [cancelConfirm, setCancelConfirm] = useState(null);
   const [cancelError, setCancelError] = useState("");
+  const [reviewTarget, setReviewTarget] = useState(null); // { id, name, type }
 
   const fetchBookings = async () => {
     setLoading(true);
@@ -130,11 +132,17 @@ export default function CustomerAppointments() {
                   <div className="mt-3 flex items-center justify-between border-t border-brand-bg pt-3">
                     <span className="text-[16px] font-bold text-brand-dark">₹{bk.amount}</span>
                     {bk.status === "upcoming" && (
+                      <button onClick={() => { setCancelError(""); setCancelConfirm(bk); }}
+                        className="flex items-center gap-1 text-[13px] font-semibold text-brand-red">
+                        <X size={14} /> Cancel
+                      </button>
+                    )}
+                    {bk.status === "completed" && bk.vendorId && (
                       <button
-                        onClick={() => { setCancelError(""); setCancelConfirm(bk); }}
-                        className="flex items-center gap-1 text-[13px] font-semibold text-brand-red"
+                        onClick={() => setReviewTarget({ id: bk.vendorId, name: bk.vendor?.name || "Vendor", type: "vendor" })}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-yellow-50 text-[12px] font-bold text-yellow-600 active:opacity-70"
                       >
-                        <X size={14} /> Cancel Booking
+                        <Star size={12} /> Rate
                       </button>
                     )}
                   </div>
@@ -201,6 +209,19 @@ export default function CustomerAppointments() {
               </div>
             </motion.div>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Review sheet */}
+      <AnimatePresence>
+        {reviewTarget && (
+          <ReviewSheet
+            targetId={reviewTarget.id}
+            targetType={reviewTarget.type}
+            targetName={reviewTarget.name}
+            onClose={() => setReviewTarget(null)}
+            onSuccess={() => setReviewTarget(null)}
+          />
         )}
       </AnimatePresence>
 

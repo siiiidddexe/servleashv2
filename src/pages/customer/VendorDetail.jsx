@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Heart, Star, Clock, MapPin, Phone, ChevronRight, Store, Truck, CheckCircle, X } from "lucide-react";
+import { ArrowLeft, Heart, Star, Clock, MapPin, Phone, ChevronRight, Store, Truck, CheckCircle, X, MessageSquare } from "lucide-react";
+import ReviewSheet from "../../components/ReviewSheet";
 import { api } from "../../lib/api";
 
 const PLACEHOLDER = "https://cdn.dribbble.com/userupload/3848536/file/original-4f623bccd6f252547abb165cb87a86ae.jpeg?resize=2048x1572&vertical=center";
@@ -15,12 +16,19 @@ export default function VendorDetail() {
   const [showBookSheet, setShowBookSheet] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [selectedMode, setSelectedMode] = useState("in_store");
+  const [reviews, setReviews] = useState([]);
+  const [showReview, setShowReview] = useState(false);
+
+  const loadReviews = async (vendorId) => {
+    try { const r = await api.getReviews("vendor", vendorId); setReviews(r); } catch {}
+  };
 
   useEffect(() => {
     (async () => {
       try {
         const v = await api.getVendor(id);
         setVendor(v);
+        loadReviews(id);
         try { const sv = await api.checkSaved(id, "vendor"); setSaved(sv.saved); } catch {}
       } catch {}
       setLoading(false);
@@ -160,7 +168,47 @@ export default function VendorDetail() {
             ))}
           </div>
         </div>
+        {/* Reviews */}
+        <div className="mt-6 px-5 pb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-[15px] font-extrabold text-brand-dark">Reviews ({reviews.length})</h3>
+            <button onClick={() => setShowReview(true)} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gray-50 text-[12px] font-semibold text-brand-dark active:opacity-70 border border-gray-100">
+              <MessageSquare size={13} /> Write a Review
+            </button>
+          </div>
+          {reviews.length === 0 ? (
+            <p className="text-[13px] text-gray-400 py-2">No reviews yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {reviews.slice(0, 5).map(r => (
+                <div key={r.id} className="rounded-xl bg-gray-50 p-3.5 border border-gray-100">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[13px] font-bold text-brand-dark">{r.userName}</span>
+                    <div className="flex items-center gap-0.5">
+                      {[1,2,3,4,5].map(s => <Star key={s} size={11} className={s <= r.rating ? "text-yellow-400 fill-yellow-400" : "text-gray-200 fill-gray-200"} />)}
+                    </div>
+                  </div>
+                  {r.comment && <p className="text-[12px] text-gray-500 leading-relaxed">{r.comment}</p>}
+                  <p className="text-[10px] text-gray-400 mt-1.5">{new Date(r.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </motion.div>
+
+      {/* Review sheet */}
+      <AnimatePresence>
+        {showReview && (
+          <ReviewSheet
+            targetId={id}
+            targetType="vendor"
+            targetName={vendor.name}
+            onClose={() => setShowReview(false)}
+            onSuccess={() => { setShowReview(false); loadReviews(id); }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Fixed bottom bar */}
       <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-gray-100 px-5 py-4 flex gap-3 z-20">
