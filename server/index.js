@@ -1361,6 +1361,33 @@ app.post("/api/orders", authenticate, async (req, res) => {
   res.json({ success: true, order });
 });
 
+app.put("/api/orders/:id/cancel", authenticate, async (req, res) => {
+  const order = await dbGetById("orders", req.params.id);
+  if (!order) return res.status(404).json({ error: "Order not found" });
+  if (order.userId !== req.userId) return res.status(403).json({ error: "Forbidden" });
+  if (!["confirmed", "processing"].includes(order.status))
+    return res.status(400).json({ error: "Only confirmed or processing orders can be cancelled" });
+
+  await dbMerge("orders", order.id, { status: "cancelled", cancelledAt: new Date().toISOString() });
+
+  // Refund coins if any were used
+  let coinsRefunded = 0;
+  if (order.coinDiscount > 0) {
+    const wallet = await dbGetById("coins", req.userId);
+    if (wallet) {
+      coinsRefunded = order.coinDiscount;
+      const txns = [...(wallet.transactions || []), {
+        type: "refund", amount: coinsRefunded,
+        desc: `Refund for cancelled order ${order.id.slice(-8)}`,
+        date: new Date().toISOString(),
+      }];
+      await dbPut("coins", req.userId, { balance: wallet.balance + coinsRefunded, transactions: txns, lastLogin: wallet.lastLogin });
+    }
+  }
+
+  res.json({ success: true, coinsRefunded });
+});
+
 // ═══════════════════════════════════════════════════════
 // COINS & REFERRAL
 // ═══════════════════════════════════════════════════════
