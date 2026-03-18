@@ -164,14 +164,14 @@ const DEFAULT_VENDORS = [
 ];
 
 const DEFAULT_PRODUCTS = [
-  { id: "prod_1", name: "Royal Canin Adult", category: "Food", price: 1299, mrp: 1499, rating: 4.7, reviews: 234, description: "Premium dry food for adult dogs, 3kg pack.", image: null, stock: 50 },
-  { id: "prod_2", name: "Squeaky Bone Toy", category: "Toys", price: 349, mrp: 499, rating: 4.5, reviews: 178, description: "Durable rubber squeaky bone toy for dogs.", image: null, stock: 30 },
-  { id: "prod_3", name: "Chicken Jerky Treats", category: "Treats", price: 249, mrp: 299, rating: 4.8, reviews: 312, description: "Real chicken jerky strips, 200g pack.", image: null, stock: 100 },
-  { id: "prod_4", name: "Anti-Tick Shampoo", category: "Hygiene", price: 399, mrp: 499, rating: 4.6, reviews: 145, description: "Medicated anti-tick and flea shampoo, 500ml.", image: null, stock: 45 },
-  { id: "prod_5", name: "Leather Collar", category: "Accessories", price: 599, mrp: 799, rating: 4.4, reviews: 89, description: "Premium genuine leather collar with brass buckle.", image: null, stock: 20 },
-  { id: "prod_6", name: "Pedigree Puppy", category: "Food", price: 899, mrp: 999, rating: 4.6, reviews: 198, description: "Complete nutrition for puppies, 1.5kg pack.", image: null, stock: 60 },
-  { id: "prod_7", name: "Rope Tug Toy", category: "Toys", price: 199, mrp: 299, rating: 4.3, reviews: 156, description: "Cotton rope tug toy for interactive play.", image: null, stock: 80 },
-  { id: "prod_8", name: "Dental Chew Sticks", category: "Treats", price: 329, mrp: 399, rating: 4.7, reviews: 267, description: "Cleans teeth and freshens breath, 10 sticks.", image: null, stock: 75 },
+  { id: "prod_1", name: "Royal Canin Adult", category: "Food", price: 1299, mrp: 1499, rating: 4.7, reviews: 234, description: "Premium dry food for adult dogs, 3kg pack. Specially formulated with balanced nutrients to support the health of adult dogs. Promotes healthy digestion, skin and coat.", image: "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?auto=format&fit=crop&w=600&q=80", stock: 50 },
+  { id: "prod_2", name: "Squeaky Bone Toy", category: "Toys", price: 349, mrp: 499, rating: 4.5, reviews: 178, description: "Durable rubber squeaky bone toy for dogs. Non-toxic natural rubber, safe for chewing. Helps keep teeth clean and entertains your pet for hours.", image: "https://images.unsplash.com/photo-1601758125946-6ec2ef64daf8?auto=format&fit=crop&w=600&q=80", stock: 30 },
+  { id: "prod_3", name: "Chicken Jerky Treats", category: "Treats", price: 249, mrp: 299, rating: 4.8, reviews: 312, description: "Real chicken jerky strips, 200g pack. Made from 100% natural chicken breast with no artificial preservatives. High-protein snack perfect for training.", image: "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?auto=format&fit=crop&w=600&q=80", stock: 100 },
+  { id: "prod_4", name: "Anti-Tick Shampoo", category: "Hygiene", price: 399, mrp: 499, rating: 4.6, reviews: 145, description: "Medicated anti-tick and flea shampoo, 500ml. Gentle formula with neem and tea tree oil. Kills ticks, fleas and mites on contact while keeping coat shiny.", image: "https://images.unsplash.com/photo-1584305574647-0cc949a2bb9f?auto=format&fit=crop&w=600&q=80", stock: 45 },
+  { id: "prod_5", name: "Leather Collar", category: "Accessories", price: 599, mrp: 799, rating: 4.4, reviews: 89, description: "Premium genuine leather collar with brass buckle. Handcrafted from full-grain leather with adjustable fit. Durable, comfortable and stylish for daily wear.", image: "https://images.unsplash.com/photo-1559715745-e1b33a271c8f?auto=format&fit=crop&w=600&q=80", stock: 20 },
+  { id: "prod_6", name: "Pedigree Puppy", category: "Food", price: 899, mrp: 999, rating: 4.6, reviews: 198, description: "Complete nutrition for puppies, 1.5kg pack. DHA-enriched formula supports brain development. Calcium for strong bones and teeth. Ideal for puppies up to 12 months.", image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?auto=format&fit=crop&w=600&q=80", stock: 60 },
+  { id: "prod_7", name: "Rope Tug Toy", category: "Toys", price: 199, mrp: 299, rating: 4.3, reviews: 156, description: "Cotton rope tug toy for interactive play. Made from 100% natural cotton fibres. Great for tug-of-war games. Helps clean teeth and gums during play.", image: "https://images.unsplash.com/photo-1583337130417-3346a1be7dee?auto=format&fit=crop&w=600&q=80", stock: 80 },
+  { id: "prod_8", name: "Dental Chew Sticks", category: "Treats", price: 329, mrp: 399, rating: 4.7, reviews: 267, description: "Cleans teeth and freshens breath, 10 sticks. Specially designed shape to reach all areas of the mouth. Reduces plaque and tartar with daily use.", image: "https://images.unsplash.com/photo-1578836537282-3171d77f8632?auto=format&fit=crop&w=600&q=80", stock: 75 },
 ];
 
 const DEFAULT_BREEDERS = [
@@ -201,6 +201,15 @@ const DEFAULT_CELEBRATIONS = [
   { id: "cel_3", name: "Puppy Shower", category: "Special", price: 3499, description: "Welcome a new puppy home with a themed shower party.", image: null },
   { id: "cel_4", name: "Custom DIY Party", category: "DIY", price: 1999, description: "Tell us your vision and we'll bring it to life. Fully customizable.", image: null },
 ];
+
+async function patchProductImages() {
+  for (const p of DEFAULT_PRODUCTS) {
+    try {
+      const existing = await dbGetById("products", p.id);
+      if (existing && !existing.image) await dbMerge("products", p.id, { image: p.image, description: p.description });
+    } catch {}
+  }
+}
 
 async function seedDefaults() {
   const tables = [
@@ -248,6 +257,7 @@ async function initDB() {
       await withTimeout(db.use({ namespace: "servleash", database: "servleash" }), 5000);
       console.log("✅ Connected to SurrealDB");
       await seedDefaults();
+      await patchProductImages();
       dbReady = true;
       return;
     } catch (err) {

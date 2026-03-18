@@ -35,6 +35,7 @@ import CoinsPage from "./pages/customer/CoinsPage";
 import Celebrations from "./pages/customer/Celebrations";
 import Charity from "./pages/customer/Charity";
 import Breeders from "./pages/customer/Breeders";
+import ProductDetail from "./pages/customer/ProductDetail";
 
 // Admin
 import AdminSplash from "./pages/admin/AdminSplash";
@@ -133,7 +134,8 @@ export default function App() {
         <Route path="/customer/coins"           element={<ProtectedRoute role="customer"><CoinsPage /></ProtectedRoute>} />
         <Route path="/customer/celebrations"    element={<ProtectedRoute role="customer"><Celebrations /></ProtectedRoute>} />
         <Route path="/customer/charity"         element={<ProtectedRoute role="customer"><Charity /></ProtectedRoute>} />
-        <Route path="/customer/breeders"        element={<ProtectedRoute role="customer"><Breeders /></ProtectedRoute>} />
+        <Route path="/customer/breeders"         element={<ProtectedRoute role="customer"><Breeders /></ProtectedRoute>} />
+        <Route path="/customer/product/:id"      element={<ProtectedRoute role="customer"><ProductDetail /></ProtectedRoute>} />
 
         {/* ── Public QR pet profile ── */}
         <Route path="/pet-qr/:petId" element={<PetQR />} />

@@ -15,7 +15,7 @@ export default function Cart() {
 
   const fetchCart = useCallback(async () => {
     setLoading(true);
-    try { const c = await api.getCart(); setItems(c); } catch { /* */ }
+    try { const c = await api.getCart(); setItems(c.items || []); } catch { /* */ }
     setLoading(false);
   }, []);
 

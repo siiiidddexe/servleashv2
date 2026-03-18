@@ -110,10 +110,11 @@ export default function CustomerShop() {
           filtered.map((p, i) => (
             <motion.div
               key={p.id}
-              className="rounded-2xl bg-white p-3 shadow-soft"
+              className="rounded-2xl bg-white p-3 shadow-soft cursor-pointer active:scale-[0.97] transition-transform"
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.06 }}
+              onClick={() => nav(`/customer/product/${p.id}`)}
             >
               <div className="h-28 rounded-xl bg-gray-100 overflow-hidden">
                 <img src={getImageSrc(p.image)} alt={p.name} className="h-full w-full object-cover" />
@@ -131,7 +132,7 @@ export default function CustomerShop() {
                     <span className="ml-1.5 text-[11px] text-brand-light line-through">₹{p.mrp}</span>
                   )}
                 </div>
-                <button onClick={() => handleAddToCart(p.id)} className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${adding === p.id ? "bg-teal-500 scale-110" : "bg-brand-dark"}`}>
+                <button onClick={(e) => { e.stopPropagation(); handleAddToCart(p.id); }} className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all ${adding === p.id ? "bg-teal-500 scale-110" : "bg-brand-dark"}`}>
                   {adding === p.id ? <Check size={14} className="text-white" /> : <Plus size={16} className="text-white" />}
                 </button>
               </div>
