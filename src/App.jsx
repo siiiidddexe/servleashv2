@@ -94,7 +94,7 @@ export default function App() {
       <Routes location={location} key={location.pathname}>
         {/* ── Root → Onboarding (first visit) or Login (returning) ── */}
         <Route path="/" element={<OnboardingGate />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/onboarding" element={<AuthRoute><Onboarding /></AuthRoute>} />
 
         {/* ── Unified auth (single login page for all roles) ── */}
         <Route path="/login"           element={<AuthRoute><Login /></AuthRoute>} />
