@@ -51,7 +51,11 @@ export default function Cart() {
         <div className="flex items-center gap-3">
           <BackBtn />
           <h1 className="text-[20px] font-bold text-brand-dark">My Cart</h1>
-          <span className="ml-auto text-[13px] text-brand-light">{items.length} items</span>
+          {items.length > 0 && (
+            <span className="ml-auto inline-flex items-center justify-center h-6 min-w-[24px] px-1.5 rounded-full bg-brand-orange text-white text-[11px] font-bold">
+              {items.length}
+            </span>
+          )}
         </div>
       </div>
 
@@ -59,37 +63,51 @@ export default function Cart() {
         {loading ? (
           <div className="mt-12 flex justify-center"><span className="spinner" /></div>
         ) : items.length === 0 ? (
-          <motion.div className="mt-16 flex flex-col items-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="h-20 w-20 rounded-full bg-teal-50 flex items-center justify-center">
-              <ShoppingCart size={36} className="text-brand-orange" />
+          <motion.div className="mt-20 flex flex-col items-center" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="h-24 w-24 rounded-full bg-teal-50 flex items-center justify-center">
+              <ShoppingCart size={40} className="text-brand-orange" strokeWidth={1.5} />
             </div>
-            <h2 className="text-[18px] font-bold text-brand-dark mt-5">Cart is empty</h2>
-            <p className="text-[14px] text-brand-light mt-2 text-center max-w-[260px]">Browse our pet shop and add items to your cart</p>
-            <button onClick={() => nav("/customer/shop")} className="btn-primary mt-5 px-8 flex items-center gap-2"><ShoppingBag size={16} /> Shop Now</button>
+            <h2 className="text-[20px] font-bold text-brand-dark mt-6">Your cart is empty</h2>
+            <p className="text-[14px] text-brand-light mt-2 text-center max-w-[240px] leading-relaxed">
+              Add items from the shop to get started
+            </p>
+            <button
+              onClick={() => nav("/customer/shop")}
+              className="mt-6 flex items-center gap-2 rounded-full bg-brand-dark px-8 py-3.5 text-[14px] font-bold text-white active:opacity-80"
+            >
+              <ShoppingBag size={16} /> Browse Shop
+            </button>
           </motion.div>
         ) : (
           <div className="space-y-3">
             {items.map((item, i) => (
-              <motion.div key={item.productId} className="rounded-2xl bg-white p-4 shadow-soft flex items-center gap-3"
+              <motion.div key={item.productId} className="rounded-2xl bg-white shadow-soft overflow-hidden"
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <div className="h-16 w-16 shrink-0 rounded-xl bg-brand-bg overflow-hidden">
-                  <img src={getImageSrc(itemImage(item))} alt={itemName(item)} className="h-full w-full object-cover" />
+                <div className="flex items-center gap-3 p-3">
+                  <div className="h-[72px] w-[72px] shrink-0 rounded-xl bg-brand-bg overflow-hidden">
+                    <img src={getImageSrc(itemImage(item))} alt={itemName(item)} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0 py-1">
+                    <h3 className="text-[14px] font-bold text-brand-dark truncate leading-tight">{itemName(item)}</h3>
+                    <p className="text-[13px] font-bold text-brand-orange mt-1">₹{itemPrice(item)}</p>
+                    <p className="text-[11px] text-brand-light mt-0.5">Subtotal: ₹{itemPrice(item) * item.qty}</p>
+                  </div>
+                  <button onClick={() => removeItem(item.productId)} className="h-8 w-8 rounded-full bg-red-50 flex items-center justify-center shrink-0 self-start mt-1">
+                    <Trash2 size={13} className="text-brand-red" />
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-[14px] font-bold text-brand-dark truncate">{itemName(item)}</h3>
-                  <p className="text-[13px] font-bold text-brand-orange mt-0.5">₹{itemPrice(item)}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => updateQty(item.productId, item.qty - 1)} className="h-8 w-8 rounded-lg bg-brand-bg flex items-center justify-center active:bg-gray-100">
-                    <Minus size={14} className="text-brand-medium" />
-                  </button>
-                  <span className="text-[14px] font-bold text-brand-dark w-6 text-center">{item.qty}</span>
-                  <button onClick={() => updateQty(item.productId, item.qty + 1)} className="h-8 w-8 rounded-lg bg-brand-bg flex items-center justify-center active:bg-gray-100">
-                    <Plus size={14} className="text-brand-medium" />
-                  </button>
-                  <button onClick={() => removeItem(item.productId)} className="h-8 w-8 rounded-lg bg-red-50 flex items-center justify-center ml-1">
-                    <Trash2 size={14} className="text-brand-red" />
-                  </button>
+                {/* Qty stepper row */}
+                <div className="flex items-center justify-between px-3 pb-3">
+                  <span className="text-[11px] text-brand-light">Qty</span>
+                  <div className="flex items-center gap-0 rounded-xl bg-brand-bg overflow-hidden">
+                    <button onClick={() => updateQty(item.productId, item.qty - 1)} className="h-8 w-9 flex items-center justify-center active:bg-gray-200">
+                      <Minus size={13} className="text-brand-medium" />
+                    </button>
+                    <span className="text-[14px] font-bold text-brand-dark w-8 text-center">{item.qty}</span>
+                    <button onClick={() => updateQty(item.productId, item.qty + 1)} className="h-8 w-9 flex items-center justify-center active:bg-gray-200">
+                      <Plus size={13} className="text-brand-medium" />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -100,14 +118,14 @@ export default function Cart() {
       {/* Footer */}
       {items.length > 0 && (
         <div className="fixed bottom-16 left-0 right-0 z-30">
-          <div className="max-w-[430px] mx-auto px-5">
-            <div className="bg-white rounded-2xl p-4 shadow-elevated flex items-center justify-between">
+          <div className="max-w-[430px] mx-auto px-4 pb-2">
+            <div className="bg-white rounded-2xl px-4 py-3 shadow-elevated flex items-center justify-between gap-3">
               <div>
-                <p className="text-[12px] text-brand-light">Total</p>
-                <p className="text-[20px] font-bold text-brand-dark">₹{total}</p>
+                <p className="text-[11px] text-brand-light leading-none mb-1">{items.length} {items.length === 1 ? "item" : "items"}</p>
+                <p className="text-[22px] font-bold text-brand-dark leading-none">₹{total}</p>
               </div>
-              <button onClick={() => nav("/customer/checkout")} className="flex items-center gap-2 rounded-full bg-brand-dark px-6 py-3 text-[14px] font-bold text-white active:opacity-80">
-                Checkout <ArrowRight size={16} />
+              <button onClick={() => nav("/customer/checkout")} className="flex items-center gap-2 rounded-xl bg-brand-dark px-5 py-3 text-[14px] font-bold text-white active:opacity-80 shrink-0">
+                Checkout <ArrowRight size={15} />
               </button>
             </div>
           </div>
