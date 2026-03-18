@@ -28,6 +28,12 @@ const MAIL_API_KEY = process.env.MAIL_API_KEY || "";
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 
+// Return 503 while DB is still connecting
+app.use("/api", (req, res, next) => {
+  if (!dbReady) return res.status(503).json({ error: "Server is starting, please try again in a moment." });
+  next();
+});
+
 // Serve uploaded files
 const UPLOAD_DIR = resolve(__dirname, "uploads");
 mkdirSync(UPLOAD_DIR, { recursive: true });
@@ -38,6 +44,7 @@ const upload = multer({ dest: UPLOAD_DIR });
 
 // ── SurrealDB ─────────────────────────────────────────
 let db;
+let dbReady = false;
 
 // Convert SurrealDB RecordId objects to plain strings
 function normalizeId(id) {
@@ -231,6 +238,7 @@ async function initDB() {
       await db.use({ namespace: "servleash", database: "servleash" });
       console.log("✅ Connected to SurrealDB");
       await seedDefaults();
+      dbReady = true;
       return;
     } catch (err) {
       retries--;
@@ -1747,8 +1755,9 @@ app.use((err, _req, res, _next) => {
 });
 
 // ── Start ─────────────────────────────────────────────
-await initDB();
+// Listen immediately so nginx doesn't get 502 while DB is connecting
 app.listen(PORT, () => {
   console.log(`🚀 Servleash API on http://localhost:${PORT}`);
   console.log(`📧 Mail API: ${MAIL_API_URL}`);
 });
+await initDB();
