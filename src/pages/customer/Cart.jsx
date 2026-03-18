@@ -8,6 +8,17 @@ import { api } from "../../lib/api";
 
 const PLACEHOLDER = "https://cdn.dribbble.com/userupload/3848536/file/original-4f623bccd6f252547abb165cb87a86ae.jpeg?resize=2048x1572&vertical=center";
 
+const getImageSrc = (img) => {
+  if (!img) return PLACEHOLDER;
+  if (img.startsWith("http")) return img;
+  return `/api${img}`;
+};
+
+// Cart items are enriched: { productId, qty, product: { name, price, image, ... } }
+const itemName  = (i) => i.product?.name  || i.name  || "Unknown";
+const itemPrice = (i) => i.product?.price || i.price || 0;
+const itemImage = (i) => i.product?.image || i.image || null;
+
 export default function Cart() {
   const nav = useNavigate();
   const [items, setItems] = useState([]);
@@ -32,7 +43,7 @@ export default function Cart() {
     try { await api.removeFromCart(productId); } catch { /* */ }
   };
 
-  const total = items.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+  const total = items.reduce((s, i) => s + itemPrice(i) * (i.qty || 1), 0);
 
   return (
     <div className="min-h-[100dvh] bg-brand-bg pb-36">
@@ -62,11 +73,11 @@ export default function Cart() {
               <motion.div key={item.productId} className="rounded-2xl bg-white p-4 shadow-soft flex items-center gap-3"
                 initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
                 <div className="h-16 w-16 shrink-0 rounded-xl bg-brand-bg overflow-hidden">
-                  <img src={item.image || PLACEHOLDER} alt={item.name} className="h-full w-full object-cover" />
+                  <img src={getImageSrc(itemImage(item))} alt={itemName(item)} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[14px] font-bold text-brand-dark truncate">{item.name}</h3>
-                  <p className="text-[13px] font-bold text-brand-orange mt-0.5">₹{item.price}</p>
+                  <h3 className="text-[14px] font-bold text-brand-dark truncate">{itemName(item)}</h3>
+                  <p className="text-[13px] font-bold text-brand-orange mt-0.5">₹{itemPrice(item)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button onClick={() => updateQty(item.productId, item.qty - 1)} className="h-8 w-8 rounded-lg bg-brand-bg flex items-center justify-center active:bg-gray-100">

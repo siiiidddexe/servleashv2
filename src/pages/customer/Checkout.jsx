@@ -22,7 +22,7 @@ export default function Checkout() {
     setLoading(true);
     try {
       const [cartData, coinData] = await Promise.all([api.getCart(), api.getCoins()]);
-      setItems(cartData);
+      setItems(cartData.items || []);
       setCoins(coinData);
     } catch { /* */ }
     setLoading(false);
@@ -30,7 +30,9 @@ export default function Checkout() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const subtotal = items.reduce((s, i) => s + (i.price || 0) * (i.qty || 1), 0);
+  const itemPrice = (i) => i.product?.price || i.price || 0;
+  const itemName  = (i) => i.product?.name  || i.name  || "Unknown";
+  const subtotal = items.reduce((s, i) => s + itemPrice(i) * (i.qty || 1), 0);
   const coinDiscount = useCoinsDiscount ? Math.min(coins.balance || 0, 100, subtotal) : 0;
   const total = subtotal - coinDiscount + charityAmount;
 
@@ -95,10 +97,10 @@ export default function Checkout() {
           {items.map(item => (
             <div key={item.productId} className="flex items-center justify-between py-2 border-b border-brand-bg last:border-0">
               <div>
-                <p className="text-[13px] font-medium text-brand-dark">{item.name}</p>
+                <p className="text-[13px] font-medium text-brand-dark">{itemName(item)}</p>
                 <p className="text-[11px] text-brand-light">Qty: {item.qty}</p>
               </div>
-              <p className="text-[13px] font-bold text-brand-dark">₹{item.price * item.qty}</p>
+              <p className="text-[13px] font-bold text-brand-dark">₹{itemPrice(item) * item.qty}</p>
             </div>
           ))}
         </motion.div>
