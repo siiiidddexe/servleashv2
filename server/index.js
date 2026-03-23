@@ -861,19 +861,25 @@ app.get("/api/pet-qr/:id", async (req, res) => {
   const pet = await dbGetById("user_pets", req.params.id);
   if (!pet || !pet.qrEnabled) return res.status(404).json({ error: "QR profile not available" });
   const user = await dbGetById("users", pet.userId);
-  const toggles = pet.qrToggles || {};
+  const t = pet.qrToggles || {};
   const profile = { id: pet.id, lostMode: pet.lostMode || false };
-  if (toggles.name) profile.name = pet.name;
-  if (toggles.photo) profile.image = pet.image;
-  if (toggles.breed) { profile.breed = pet.breed; profile.species = pet.species; }
-  if (toggles.age) profile.age = pet.age;
-  if (toggles.medicalRecords) profile.documents = pet.documents || [];
-  if (toggles.ownerName && user) profile.ownerName = user.name;
-  if (toggles.ownerPhone && user) profile.ownerPhone = user.phone;
+  if (t.showName)       profile.name    = pet.name;
+  if (t.showPhoto)      profile.image   = pet.image;
+  if (t.showBreed)      { profile.breed = pet.breed; profile.species = pet.species; }
+  if (t.showAge)        profile.age     = pet.age;
+  if (t.showGender)     profile.gender  = pet.gender;
+  if (t.showColor)      profile.color   = pet.color;
+  if (t.showWeight)     profile.weight  = pet.weight;
+  if (t.showOwnerName  && user) profile.ownerName  = user.name;
+  if (t.showOwnerPhone && user) profile.ownerPhone = user.phone;
+  if (t.showOwnerEmail && user) profile.ownerEmail = user.email;
+  // Lost mode always exposes owner contact
   if (pet.lostMode && user) {
-    profile.ownerName = user.name;
+    profile.name       = pet.name;
+    profile.image      = pet.image;
+    profile.ownerName  = user.name;
     profile.ownerPhone = user.phone;
-    profile.emergencyMessage = "This pet has been reported LOST. Please contact the owner!";
+    profile.emergencyMessage = "This pet has been reported LOST. Please contact the owner immediately!";
   }
   res.json(profile);
 });

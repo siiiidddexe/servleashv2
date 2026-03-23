@@ -24,6 +24,7 @@ import BookingFlow from "./pages/customer/BookingFlow";
 import MyPets from "./pages/customer/MyPets";
 import PetDocs from "./pages/customer/PetDocs";
 import PetQR from "./pages/customer/PetQR";
+import PetPublicProfile from "./pages/customer/PetPublicProfile";
 import PetOGram from "./pages/customer/PetOGram";
 import EmergencyVet from "./pages/customer/EmergencyVet";
 import LostPetRecovery from "./pages/customer/LostPetRecovery";
@@ -138,7 +139,7 @@ export default function App() {
         <Route path="/customer/product/:id"      element={<ProtectedRoute role="customer"><ProductDetail /></ProtectedRoute>} />
 
         {/* ── Public QR pet profile ── */}
-        <Route path="/pet-qr/:petId" element={<PetQR />} />
+        <Route path="/pet-qr/:petId" element={<PetPublicProfile />} />
 
         {/* ── Admin flow ── */}
         <Route path="/admin"                element={<ProtectedRoute role="admin"><AdminSplash /></ProtectedRoute>} />
