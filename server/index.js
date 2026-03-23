@@ -39,8 +39,11 @@ const UPLOAD_DIR = resolve(__dirname, "uploads");
 mkdirSync(UPLOAD_DIR, { recursive: true });
 app.use("/uploads", express.static(UPLOAD_DIR));
 
-// Multer for uploads (simple disk storage)
-const upload = multer({ dest: UPLOAD_DIR });
+// Multer for uploads (disk storage, 5 MB limit)
+const upload = multer({
+  dest: UPLOAD_DIR,
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
 
 // ── SurrealDB ─────────────────────────────────────────
 let db;
@@ -832,15 +835,26 @@ app.delete("/api/my-pets/:id", authenticate, async (req, res) => {
 });
 
 // Pet documents
-app.post("/api/my-pets/:id/documents", authenticate, upload.single("file"), async (req, res) => {
+app.post("/api/my-pets/:id/documents", authenticate, (req, res, next) => {
+  upload.single("file")(req, res, (err) => {
+    if (err?.code === "LIMIT_FILE_SIZE") return res.status(400).json({ error: "File exceeds 5 MB limit" });
+    if (err) return res.status(400).json({ error: err.message });
+    next();
+  });
+}, async (req, res) => {
   const pet = await dbGetById("user_pets", req.params.id);
   if (!pet || pet.userId !== req.userId) return res.status(404).json({ error: "Pet not found" });
   if ((pet.documents || []).length >= 10) return res.status(400).json({ error: "Maximum 10 documents per pet" });
   if (!req.file) return res.status(400).json({ error: "No file uploaded" });
   const doc = {
-    id: genId("doc"), name: req.body.docName || req.file.originalname,
-    type: req.body.docType || "other", url: `/uploads/${req.file.filename}`,
-    originalName: req.file.originalname, uploaded_at: new Date().toISOString(),
+    id: genId("doc"),
+    name: req.body.docName || req.file.originalname,
+    type: req.body.type || req.body.docType || "Other",
+    url: `/uploads/${req.file.filename}`,
+    originalName: req.file.originalname,
+    size: req.file.size,
+    mimetype: req.file.mimetype,
+    uploadedAt: new Date().toISOString(),
   };
   const docs = [...(pet.documents || []), doc];
   await dbMerge("user_pets", pet.id, { documents: docs });
